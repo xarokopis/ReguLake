@@ -16,6 +16,9 @@ class ChunkInput(BaseModel):
     char_length: int
     law_passed_date: str | None = None
     ingested_at: str | None = None
+    regulation_title: str | None = None
+    document_version: str | None = None
+    issuing_authority: str | None = None
 
 
 class AddChunksInput(BaseModel):

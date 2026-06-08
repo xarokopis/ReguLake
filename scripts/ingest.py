@@ -31,7 +31,7 @@ add_windows_dll_directories()
 
 import shutil
 from gtgh_team3_compliance_assistant.config import (
-    PDF_DIR, CHROMA_PATH, COLLECTION_NAME, EMBEDDING_MODEL_NAME,
+    PDF_DIR, CHROMA_PATH, COLLECTION_NAME, EMBEDDING_MODEL_NAME, METADATA_FILE,
 )
 from gtgh_team3_compliance_assistant.embedding.LocalEmbedder import LocalEmbedder
 from gtgh_team3_compliance_assistant.storing.Storage import ChromaVectorStore
@@ -39,6 +39,9 @@ from gtgh_team3_compliance_assistant.pipeline.rag_pipeline import RAGPipeline
 
 shutil.rmtree(CHROMA_PATH, ignore_errors=True)
 print("Cleared old ChromaDB\n")
+
+METADATA_FILE.write_text("[]")
+print("Cleared documents.json\n")
 
 embedding_model = LocalEmbedder(model_name=EMBEDDING_MODEL_NAME)
 vector_store = ChromaVectorStore(persist_path=str(CHROMA_PATH), collection_name=COLLECTION_NAME)

@@ -1,9 +1,11 @@
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 from gtgh_team3_compliance_assistant.processing.text_extractor import TextExtractor
 from gtgh_team3_compliance_assistant.processing.eur_chunker import EurChunker
 from gtgh_team3_compliance_assistant.processing.chunk_storing import ChunkStore
+from gtgh_team3_compliance_assistant.ingestion.metadata_storing import MetadataStore
 from gtgh_team3_compliance_assistant.models.chunks import ChunkInput, AddChunksInput
 from gtgh_team3_compliance_assistant.models.search import SearchInput
 
@@ -28,6 +30,9 @@ class RAGPipeline:
         text, pages = self.extractor.extract(str(self.pdf_path))
         print(f"Extracted {len(text)} characters across {len(pages)} pages")
 
+        doc_meta = self.extractor.extract_metadata(pages[0])
+        ingested_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
         raw_chunks = self.chunker.chunk(text)
         print(f"Created {len(raw_chunks)} chunks")
 
@@ -37,6 +42,7 @@ class RAGPipeline:
             document_id=self.pdf_path.stem,
             chunks=raw_chunks,
             source_pdf=str(self.pdf_path),
+            doc_meta=doc_meta,
         )
         print(f"Saved chunks to data/chunks/{self.pdf_path.stem}.json")
 
@@ -59,6 +65,11 @@ class RAGPipeline:
                     source_file=self.pdf_path.name,
                     page=chunk.get("page"),
                     char_length=len(chunk["text"]),
+                    law_passed_date=doc_meta.get("law_passed_date"),
+                    ingested_at=ingested_at,
+                    regulation_title=doc_meta.get("regulation_title"),
+                    document_version=doc_meta.get("document_version"),
+                    issuing_authority=doc_meta.get("issuing_authority"),
                 )
                 chunk_models.append(model)
 
@@ -80,6 +91,17 @@ class RAGPipeline:
         print("Saved to Chroma")
         print("Collection count:", self.vector_store.collection.count())
 
+        MetadataStore().add({
+            "document_id": self.pdf_path.stem,
+            "source_pdf": str(self.pdf_path),
+            "regulation_title": doc_meta.get("regulation_title"),
+            "document_version": doc_meta.get("document_version"),
+            "issuing_authority": doc_meta.get("issuing_authority"),
+            "law_passed_date": doc_meta.get("law_passed_date"),
+            "ingested_at": ingested_at,
+            "chunk_count": len(chunk_models),
+        })
+
     def retrieve(self, question: str, top_k: int = 5):
         query_embedding = self.embedding_model.embed_query(question)
         return self.vector_store.search(
@@ -87,7 +109,32 @@ class RAGPipeline:
         )
 
     def build_context(self, results):
-        return "\n\n---\n\n".join([result.content for result in results])
+        parts = []
+        for r in results:
+            m = r.metadata
+            title = m.get('regulation_title') or m.get('source_file', 'Unknown')
+            version = m.get('document_version')
+            doc_ref = f"{title} ({version})" if version else title
+
+            article = m.get('article_number')
+            annex = m.get('annex_number')
+            page = m.get('page_number', '?')
+            part_index = m.get('part_index', 0)
+            part_count = m.get('part_count', 1)
+
+            if article:
+                location = f"Article {article}"
+                if part_count > 1:
+                    location += f" — Part {part_index + 1}/{part_count}"
+            elif annex:
+                location = f"Annex {annex}"
+            else:
+                location = f"Page {page}"
+
+            header = f"[{doc_ref} | {location} | Page {page}]"
+            parts.append(f"{header}\n{r.content}")
+
+        return "\n\n---\n\n".join(parts)
 
     def ask(self, question: str, top_k: int = 5):
         if self.llm is None:

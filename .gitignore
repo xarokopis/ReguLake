@@ -12,3 +12,9 @@ build/
 
 # OS
 .DS_Store
+
+# Generated pipeline output — do not commit
+chroma_db/
+data/chunks/
+data/metadata/
+data/extracted/

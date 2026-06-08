@@ -42,6 +42,9 @@ class ChromaVectorStore(BaseModel):
                 "part_count": chunk.part_count,
                 "law_passed_date": chunk.law_passed_date or "",
                 "ingested_at": chunk.ingested_at or "",
+                "regulation_title": chunk.regulation_title or "",
+                "document_version": chunk.document_version or "",
+                "issuing_authority": chunk.issuing_authority or "",
             }
             for chunk in input.chunks
         ]

@@ -7,7 +7,7 @@ class EurChunker:
     ANNEX_HEADING_PATTERN = r"(?m)^\s*ANNEX(?:ES)?\s+([IVX]+)?\s*$"
     PARAGRAPH_SPLIT_PATTERN = r"\n(?=(?:\([A-Za-z0-9]+\)|\d+\.)\s)"
 
-    def __init__(self, max_chunk_chars: int = 4000, overlap: int = 50):
+    def __init__(self, max_chunk_chars: int = 900, overlap: int = 50):
         self.max_chunk_chars = max_chunk_chars
         self.overlap = overlap
 
@@ -202,7 +202,7 @@ class EurChunker:
             for idx, part_text in enumerate(parts)
         ]
 
-    def _fallback_chunk(self, text: str, chunk_size: int = 1000, overlap: int = 150):
+    def _fallback_chunk(self, text: str, chunk_size: int = 900, overlap: int = 150):
         chunks = []
         start = 0
 

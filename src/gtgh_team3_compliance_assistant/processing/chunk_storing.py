@@ -11,13 +11,18 @@ class ChunkStore:
         chunks: list[dict],
         source_pdf: str | None = None,
         law_passed_date: str | None = None,
+        doc_meta: dict | None = None,
     ):
         file_path = CHUNK_DIR / f"{document_id}.json"
+        meta = doc_meta or {}
 
         payload = {
             "document_id": document_id,
             "source_pdf": source_pdf,
-            "law_passed_date": law_passed_date,
+            "regulation_title": meta.get("regulation_title"),
+            "document_version": meta.get("document_version"),
+            "issuing_authority": meta.get("issuing_authority"),
+            "law_passed_date": meta.get("law_passed_date") or law_passed_date,
             "ingested_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "chunk_count": len(chunks),
             "chunks": [],
