@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Databricks RAG Client</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 40px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #1f2937;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 14px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 12px 22px;
+      font-size: 16px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .section {
+      margin-top: 25px;
+      padding: 18px;
+      background: #f9fafb;
+      border-left: 4px solid #2563eb;
+      border-radius: 8px;
+    }
+
+    .error {
+      border-left-color: #dc2626;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    .source {
+      margin-top: 12px;
+      padding: 12px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+
+    .loading {
+      margin-top: 15px;
+      color: #555;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: inherit;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Databricks RAG Query Client</h1>
+
+    <label for="question"><strong>Ask a question</strong></label>
+    <textarea id="question" placeholder="Type your question here..."></textarea>
+
+    <br />
+
+    <button id="submitBtn" onclick="sendQuery()">Ask</button>
+
+    <div id="loading" class="loading" style="display: none;">
+      Processing request...
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:8000/databricks/query";
+
+    async function sendQuery() {
+      const questionInput = document.getElementById("question");
+      const resultDiv = document.getElementById("result");
+      const loadingDiv = document.getElementById("loading");
+      const submitBtn = document.getElementById("submitBtn");
+
+      const question = questionInput.value.trim();
+
+      resultDiv.innerHTML = "";
+
+      if (!question) {
+        resultDiv.innerHTML = `
+          <div class="section error">
+            Please enter a question.
+          </div>
+        `;
+        return;
+      }
+
+      loadingDiv.style.display = "block";
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            question: question,
+            top_k: 5
+          })
+        });
+
+        if (!response.ok) {
+          let message = "Request failed";
+
+          try {
+            const errorData = await response.json();
+            message = errorData.detail || JSON.stringify(errorData, null, 2);
+          } catch {
+            message = await response.text();
+          }
+
+          throw new Error(message);
+        }
+
+        const data = await response.json();
+
+        let sourcesHtml = "";
+
+        if (data.sources && data.sources.length > 0) {
+          sourcesHtml = data.sources.map((source, index) => {
+            return `
+              <div class="source">
+                <strong>Source ${index + 1}</strong>
+                <pre>${escapeHtml(formatObject(source))}</pre>
+              </div>
+            `;
+          }).join("");
+        } else {
+          sourcesHtml = "<p>No sources returned.</p>";
+        }
+
+        resultDiv.innerHTML = `
+          <div class="section">
+            <h2>Question</h2>
+            <pre>${escapeHtml(question)}</pre>
+          </div>
+
+          <div class="section">
+            <h2>Answer</h2>
+            <pre>${escapeHtml(data.answer || "No answer returned.")}</pre>
+          </div>
+
+          <div class="section">
+            <h2>Sources</h2>
+            ${sourcesHtml}
+          </div>
+        `;
+
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="section error">
+            <strong>Error:</strong>
+            <pre>${escapeHtml(error.message)}</pre>
+          </div>
+        `;
+      } finally {
+        loadingDiv.style.display = "none";
+        submitBtn.disabled = false;
+      }
+    }
+
+    function formatObject(value) {
+      if (typeof value === "string") {
+        return value;
+      }
+
+      return JSON.stringify(value, null, 2);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
+</body>
+</html>
