@@ -15,6 +15,7 @@ build/
 
 # Generated pipeline output — do not commit
 chroma_db/
+chroma_db_azure/
 data/chunks/
 data/metadata/
 data/extracted/

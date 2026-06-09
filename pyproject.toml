@@ -20,6 +20,8 @@ dependencies = [
     "databricks-sdk>=0.115.0",
     "databricks-connect>=16.1.7",
     "azure-search-documents>=12.0.0",
+    "ragas>=0.2.0,<0.3.0",
+    "langchain-community>=0.2.0",
 ]
 
 [build-system]
