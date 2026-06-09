@@ -25,28 +25,29 @@ endpoint=os.getenv("AZURE_SEARCH_ENDPOINT")
 admin_key = os.getenv("AZURE_SEARCH_KEY")
 
 DEFAULT_FIELDS = [
-    SimpleField(
-        name="chunk_id",
-        type=SearchFieldDataType.String,
-        key=True
-    ),
-    SearchableField(
-        name="chunk_text",
-        type=SearchFieldDataType.String
-    ),
+    SimpleField(name="chunk_uid",         type=SearchFieldDataType.String,  key=True),
+    SimpleField(name="chunk_id",          type=SearchFieldDataType.Int32,   filterable=True),
+    SimpleField(name="source_file",       type=SearchFieldDataType.String,  filterable=True, facetable=True),
+    SimpleField(name="regulation_title",  type=SearchFieldDataType.String,  filterable=True, facetable=True),
+    SimpleField(name="document_version",  type=SearchFieldDataType.String,  filterable=True),
+    SimpleField(name="issuing_authority", type=SearchFieldDataType.String,  filterable=True),
+    SimpleField(name="law_passed_date",   type=SearchFieldDataType.String,  filterable=True, sortable=True),
+    SimpleField(name="ingested_at",       type=SearchFieldDataType.String,  filterable=True, sortable=True),
+    SimpleField(name="type",              type=SearchFieldDataType.String,  filterable=True, facetable=True),
+    SimpleField(name="article_number",    type=SearchFieldDataType.String,  filterable=True),
+    SimpleField(name="annex_number",      type=SearchFieldDataType.String,  filterable=True),
+    SimpleField(name="page_number",       type=SearchFieldDataType.Int32,   filterable=True, sortable=True),
+    SimpleField(name="part_index",        type=SearchFieldDataType.Int32,   filterable=True),
+    SimpleField(name="part_count",        type=SearchFieldDataType.Int32,   filterable=True),
+    SimpleField(name="char_length",       type=SearchFieldDataType.Int32,   filterable=True),
+    SearchableField(name="chunk_text",    type=SearchFieldDataType.String),
+    SearchableField(name="title",         type=SearchFieldDataType.String),
     SearchField(
         name="embedding",
-
-        type=SearchFieldDataType.Collection(
-            SearchFieldDataType.Single
-        ),
-
+        type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
         searchable=True,
-
         vector_search_dimensions=1536,
-
-        vector_search_profile_name=
-            "vector-profile"
+        vector_search_profile_name="vector-profile"
     )
 ]
 
