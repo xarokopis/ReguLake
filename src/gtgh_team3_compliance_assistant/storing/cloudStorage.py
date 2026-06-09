@@ -1,6 +1,3 @@
-"""
-creating an index
-"""
 from gtgh_team3_compliance_assistant.models.chunks import AddChunksInput
 from gtgh_team3_compliance_assistant.models.search import SearchInput
 from azure.search.documents import SearchClient
