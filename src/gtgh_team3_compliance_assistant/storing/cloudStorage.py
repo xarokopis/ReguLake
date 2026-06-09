@@ -1,6 +1,9 @@
 from gtgh_team3_compliance_assistant.models.chunks import AddChunksInput
 from gtgh_team3_compliance_assistant.models.search import SearchInput
+
+from azure.core.exceptions import ResourceNotFoundError
 from azure.search.documents import SearchClient
+from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.models import VectorizedQuery
 from azure.search.documents.indexes.models import (
     SearchIndex,
@@ -17,7 +20,6 @@ from azure.core.credentials import AzureKeyCredential
 import os
 import dotenv
 from pydantic import BaseModel, PrivateAttr
-from typing import List
 dotenv.load_dotenv()
 
 TEAM_NAME = "team03"
@@ -36,11 +38,11 @@ DEFAULT_FIELDS = [
     SimpleField(name="type",              type=SearchFieldDataType.String,  filterable=True, facetable=True),
     SimpleField(name="article_number",    type=SearchFieldDataType.String,  filterable=True),
     SimpleField(name="annex_number",      type=SearchFieldDataType.String,  filterable=True),
-    SimpleField(name="page_number",       type=SearchFieldDataType.Int32,   filterable=True, sortable=True),
+    SimpleField(name="page",       type=SearchFieldDataType.Int32,   filterable=True, sortable=True),
     SimpleField(name="part_index",        type=SearchFieldDataType.Int32,   filterable=True),
     SimpleField(name="part_count",        type=SearchFieldDataType.Int32,   filterable=True),
     SimpleField(name="char_length",       type=SearchFieldDataType.Int32,   filterable=True),
-    SearchableField(name="chunk_text",    type=SearchFieldDataType.String),
+    SearchableField(name="text",    type=SearchFieldDataType.String),
     SearchableField(name="title",         type=SearchFieldDataType.String),
     SearchField(
         name="embedding",
@@ -55,13 +57,21 @@ class CloudStorage(BaseModel):
     index_name: str = TEAM_NAME
     _client: SearchClient = PrivateAttr()
     _vector_search: VectorSearch = PrivateAttr()
-    _fields: List[SimpleField, SearchableField, SearchField] = PrivateAttr()
+    _fields: list = PrivateAttr()
 
     def model_post_init(self, __context):
         admin_key = os.getenv("AZURE_SEARCH_KEY")
+        if not admin_key:
+            raise Exception("Azure Admin key does not exist")
         self._client = SearchClient(
             endpoint=endpoint,
             index_name=TEAM_NAME,
+            credential=AzureKeyCredential(admin_key)
+        )
+
+        # Check if index exists
+        index_client = SearchIndexClient(
+            endpoint=endpoint, 
             credential=AzureKeyCredential(admin_key)
         )
 
@@ -78,26 +88,41 @@ class CloudStorage(BaseModel):
                 )
             ]
         )
+
+        try:
+            index_client.get_index(name=TEAM_NAME)
+            print(f"Index '{TEAM_NAME}' already exists.")
+        except ResourceNotFoundError:
+            print(f"Index '{TEAM_NAME}' not found. Creating it now...")
+            index = SearchIndex(name=TEAM_NAME, fields=DEFAULT_FIELDS, vector_search=self._vector_search)
+            index_client.create_index(index)
     
-    def createIndex(self, fields: list = DEFAULT_FIELDS):
-        index = SearchIndex(
-            name=TEAM_NAME,
-            fields=fields,
-            vector_search=self._vector_search
+    def recreateIndex(self, fields: list = DEFAULT_FIELDS):
+        index_client = SearchIndexClient(
+            endpoint=endpoint, 
+            credential=AzureKeyCredential(admin_key)
         )
 
-        self._client.create_or_update_index(index)
+        try:
+            print(f"Deleting index '{TEAM_NAME}' if it exists...")
+            index_client.delete_index(TEAM_NAME)
+            print("Old index deleted successfully.")
+        except ResourceNotFoundError:
+            print("Index didn't exist yet, skipping deletion.")
+        
+        new_index_definition = SearchIndex(name=TEAM_NAME, fields=fields, vector_search=self._vector_search)
+        print(f"Creating fresh index '{TEAM_NAME}'...")
+        index_client.create_index(new_index_definition)
+        print("Index recreated successfully!")
     
     def add_chunks(self, input: AddChunksInput) -> None:
         documents = self._process_chunks(input)
         if type(documents) != list:
             documents = [documents]
 
-        result = self._client.upload_documents(
+        self._client.upload_documents(
             documents=documents
         )
-
-        print(result) # TODO: Remove this line
 
     def search(self, input: SearchInput) -> list:
         results = self._client.search(
@@ -109,18 +134,29 @@ class CloudStorage(BaseModel):
                     fields="embedding"
                 )
             ],
-
-            # TODO: Change Select Statement
             select=[
+                "chunk_uid",
                 "chunk_id",
-                "chunk_text"
+                "source_file",
+                "regulation_title",
+                "document_version",
+                "issuing_authority",
+                "law_passed_date",
+                "ingested_at",
+                "type",
+                "article_number",
+                "annex_number",
+                "page",
+                "part_index",
+                "part_count",
+                "char_length",
+                "text",
+                "title"
             ]
         )
-        print("Warning: SELECT statement hasn't been changed")
-
         return results
     
-    def _process_chunks(input_data: AddChunksInput) -> list[dict]:
+    def _process_chunks(self, input_data: AddChunksInput) -> list[dict]:
         return [
             {**chunk.model_dump(), "embedding": emb}
             for chunk, emb in zip(input_data.chunks, input_data.embeddings)

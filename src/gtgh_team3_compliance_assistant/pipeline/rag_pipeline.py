@@ -26,18 +26,10 @@ class RAGPipeline:
             raise ValueError("pdf_path is not set")
 
         print(f"\nReading: {self.pdf_path.name}")
+        # Extract Text from pdf
+        doc_meta, ingested_at, raw_chunks = self.chunk_pdf()
 
-        text, pages = self.extractor.extract(str(self.pdf_path))
-        print(f"Extracted {len(text)} characters across {len(pages)} pages")
-
-        doc_meta = self.extractor.extract_metadata(pages[0])
-        ingested_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-        raw_chunks = self.chunker.chunk(text)
-        print(f"Created {len(raw_chunks)} chunks")
-
-        self._tag_pages(raw_chunks, pages)
-
+        # Save Chunk Data to Json file
         self.chunk_store.save(
             document_id=self.pdf_path.stem,
             chunks=raw_chunks,
@@ -46,40 +38,9 @@ class RAGPipeline:
         )
         print(f"Saved chunks to data/chunks/{self.pdf_path.stem}.json")
 
-        chunk_models = []
-
-        for idx, chunk in enumerate(raw_chunks):
-            chunk_uid = self._build_uid(self.pdf_path.stem, chunk, idx)
-
-            try:
-                model = ChunkInput(
-                    chunk_uid=chunk_uid,
-                    chunk_id=idx,
-                    type=chunk.get("type"),
-                    article_number=chunk.get("article_number"),
-                    annex_number=chunk.get("annex_number"),
-                    title=chunk.get("title"),
-                    part_index=chunk.get("part_index", 0),
-                    part_count=chunk.get("part_count", 1),
-                    text=chunk["text"],
-                    source_file=self.pdf_path.name,
-                    page=chunk.get("page"),
-                    char_length=len(chunk["text"]),
-                    law_passed_date=doc_meta.get("law_passed_date"),
-                    ingested_at=ingested_at,
-                    regulation_title=doc_meta.get("regulation_title"),
-                    document_version=doc_meta.get("document_version"),
-                    issuing_authority=doc_meta.get("issuing_authority"),
-                )
-                chunk_models.append(model)
-
-            except Exception as e:
-                print(f"Chunk failed: {idx}")
-                print(chunk)
-                raise e
-
+        chunk_models = self._create_chunk_models(raw_chunks, doc_meta, ingested_at)
         print(f"ChunkInput models created: {len(chunk_models)}")
-
+        
         embeddings = self.embedding_model.embed_documents(
             [chunk.text for chunk in chunk_models]
         )
@@ -88,8 +49,7 @@ class RAGPipeline:
         add_input = AddChunksInput(chunks=chunk_models, embeddings=embeddings)
         self.vector_store.add_chunks(add_input)
 
-        print("Saved to Chroma")
-        print("Collection count:", self.vector_store.collection.count())
+        print("Chunks Saved")
 
         MetadataStore().add({
             "document_id": self.pdf_path.stem,
@@ -101,6 +61,19 @@ class RAGPipeline:
             "ingested_at": ingested_at,
             "chunk_count": len(chunk_models),
         })
+
+    def chunk_pdf(self):
+        text, pages = self.extractor.extract(str(self.pdf_path))
+        print(f"Extracted {len(text)} characters across {len(pages)} pages")
+
+        doc_meta = self.extractor.extract_metadata(pages[0])
+        ingested_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+        raw_chunks = self.chunker.chunk(text)
+        print(f"Created {len(raw_chunks)} chunks")
+
+        self._tag_pages(raw_chunks, pages)
+        return doc_meta, ingested_at, raw_chunks
 
     def retrieve(self, question: str, top_k: int = 5):
         query_embedding = self.embedding_model.embed_query(question)
@@ -200,3 +173,37 @@ class RAGPipeline:
             return f"{document_id}_ann_{chunk['annex_number']}_p_{part_index}"
 
         return f"{document_id}_chunk_{idx}"
+
+    def _create_chunk_models(self, raw_chunks: list, metadata: dict, ingested_at: str) -> list:
+        returned_list = []
+        for idx, chunk in enumerate(raw_chunks):
+            chunk_uid = self._build_uid(self.pdf_path.stem, chunk, idx)
+
+            try:
+                model = ChunkInput(
+                    chunk_uid=chunk_uid,
+                    chunk_id=idx,
+                    type=chunk.get("type"),
+                    article_number=chunk.get("article_number"),
+                    annex_number=chunk.get("annex_number"),
+                    title=chunk.get("title"),
+                    part_index=chunk.get("part_index", 0),
+                    part_count=chunk.get("part_count", 1),
+                    text=chunk["text"],
+                    source_file=self.pdf_path.name,
+                    page=chunk.get("page"),
+                    char_length=len(chunk["text"]),
+                    law_passed_date=metadata.get("law_passed_date"),
+                    ingested_at=ingested_at,
+                    regulation_title=metadata.get("regulation_title"),
+                    document_version=metadata.get("document_version"),
+                    issuing_authority=metadata.get("issuing_authority"),
+                )
+                returned_list.append(model)
+
+            except Exception as e:
+                print(f"Chunk failed: {idx}")
+                print(chunk)
+                raise e
+        
+        return returned_list

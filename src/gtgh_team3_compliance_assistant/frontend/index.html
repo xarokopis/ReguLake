@@ -1,220 +1,843 @@
-<!DOCTYPE html>
+<!doctype html>
+<script>
+  const apiURI = "http://localhost:8000";
+</script>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>FastAPI RAG Client</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 40px;
-      color: #222;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReguLake</title>
 
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
 
-    h1 {
-      margin-top: 0;
-      color: #1f2937;
-    }
+    <!-- Bootstrap 5 -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
 
-    textarea {
-      width: 100%;
-      min-height: 120px;
-      padding: 14px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      resize: vertical;
-      box-sizing: border-box;
-    }
+    <!-- Bootstrap Icons -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
 
-    button {
-      margin-top: 15px;
-      padding: 12px 22px;
-      font-size: 16px;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
+    <style>
+      /* ── TOKENS ─────────────────────────────────────────────────── */
+      :root {
+        --bg: #0d0d14;
+        --surface: #16161f;
+        --surface-2: #1e1e2a;
+        --surface-3: #252534;
+        --border: #2a2a3a;
+        --purple: #7c3aed;
+        --purple-light: #a78bfa;
+        --purple-glow: rgba(124, 58, 237, 0.18);
+        --purple-dim: rgba(124, 58, 237, 0.08);
+        --text: #e2e8f0;
+        --text-muted: #94a3b8;
+        --text-dim: #4b5563;
+        --gold: #f59e0b;
+        --radius: 14px;
+        --radius-sm: 8px;
+      }
 
-    button:hover {
-      background: #1d4ed8;
-    }
+      /* ── RESET / BASE ────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
 
-    button:disabled {
-      background: #9ca3af;
-      cursor: not-allowed;
-    }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        font-size: 15px;
+        line-height: 1.6;
+        overflow: hidden;
+      }
 
-    .section {
-      margin-top: 25px;
-      padding: 18px;
-      background: #f9fafb;
-      border-left: 4px solid #2563eb;
-      border-radius: 8px;
-    }
+      /* ── LAYOUT ──────────────────────────────────────────────────── */
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
 
-    .error {
-      border-left-color: #dc2626;
-      background: #fef2f2;
-      color: #991b1b;
-    }
+      /* ── HEADER ──────────────────────────────────────────────────── */
+      .app-header {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 24px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: relative;
+        z-index: 10;
+      }
 
-    .chunk {
-      margin-top: 12px;
-      padding: 12px;
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      white-space: pre-wrap;
-    }
+      /* EU star ring icon */
+      .eu-ring {
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+      }
 
-    .loading {
-      margin-top: 15px;
-      color: #555;
-    }
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
 
-    pre {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-family: inherit;
-    }
-  </style>
-</head>
+      .brand-name {
+        font-family: "DM Serif Display", serif;
+        font-size: 1.35rem;
+        color: var(--text);
+        letter-spacing: 0.01em;
+        line-height: 1;
+      }
 
-<body>
-  <div class="container">
-    <h1>FastAPI RAG Query Client</h1>
+      .brand-name span {
+        color: var(--purple-light);
+      }
 
-    <label for="question"><strong>Ask a question</strong></label>
-    <textarea id="question" placeholder="Type your question here..."></textarea>
+      .brand-sub {
+        font-size: 0.7rem;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
 
-    <br />
+      .header-badge {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        padding: 5px 11px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: var(--surface-2);
+      }
 
-    <button id="submitBtn" onclick="sendQuery()">Ask</button>
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #22c55e;
+        box-shadow: 0 0 6px #22c55e;
+      }
 
-    <div id="loading" class="loading" style="display: none;">
-      Processing request...
+      /* ── CHAT AREA ───────────────────────────────────────────────── */
+      .chat-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        scroll-behavior: smooth;
+      }
+
+      /* custom scrollbar */
+      .chat-scroll::-webkit-scrollbar {
+        width: 5px;
+      }
+      .chat-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .chat-scroll::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 10px;
+      }
+      .chat-scroll::-webkit-scrollbar-thumb:hover {
+        background: var(--purple);
+      }
+
+      /* ── WELCOME ─────────────────────────────────────────────────── */
+      .welcome {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 40px 20px;
+        gap: 16px;
+        flex: 1;
+      }
+
+      .welcome-stars {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 4px;
+      }
+
+      .welcome-stars i {
+        font-size: 0.8rem;
+        color: var(--gold);
+      }
+
+      .welcome h2 {
+        font-family: "DM Serif Display", serif;
+        font-size: 1.9rem;
+        color: var(--text);
+        margin: 0;
+      }
+
+      .welcome h2 em {
+        font-style: italic;
+        color: var(--purple-light);
+      }
+
+      .welcome p {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+        max-width: 440px;
+        margin: 0;
+      }
+
+      .welcome-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 8px;
+      }
+
+      .chip {
+        background: var(--purple-dim);
+        border: 1px solid rgba(124, 58, 237, 0.25);
+        color: var(--purple-light);
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+
+      .chip:hover {
+        background: rgba(124, 58, 237, 0.18);
+        border-color: var(--purple-light);
+      }
+
+      /* ── MESSAGE BUBBLES ─────────────────────────────────────────── */
+      .msg-row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        animation: fadeSlideUp 0.25s ease;
+      }
+
+      @keyframes fadeSlideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .msg-row.user {
+        align-items: flex-end;
+      }
+      .msg-row.assistant {
+        align-items: flex-start;
+      }
+
+      .bubble {
+        max-width: 82%;
+        padding: 12px 16px;
+        border-radius: var(--radius);
+        font-size: 0.9rem;
+        line-height: 1.65;
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
+
+      .msg-row.user .bubble {
+        background: var(--purple);
+        color: #fff;
+        border-bottom-right-radius: 4px;
+      }
+
+      .msg-row.assistant .bubble {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-bottom-left-radius: 4px;
+      }
+
+      /* Citation styling inside assistant bubbles */
+      .bubble .citation {
+        display: inline;
+        font-size: 0.8em;
+        color: var(--purple-light);
+        opacity: 0.85;
+      }
+
+      .msg-meta {
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        padding: 0 4px;
+      }
+
+      /* ── THINKING INDICATOR ──────────────────────────────────────── */
+      .thinking-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        animation: fadeSlideUp 0.25s ease;
+      }
+
+      .thinking-avatar {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: var(--purple-glow);
+        border: 1px solid rgba(124, 58, 237, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 2px;
+      }
+
+      .thinking-avatar i {
+        font-size: 0.75rem;
+        color: var(--purple-light);
+      }
+
+      .thinking-card {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        border-bottom-left-radius: 4px;
+        padding: 12px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 360px;
+      }
+
+      .thinking-msg {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        min-height: 1.2em;
+        transition: opacity 0.3s;
+      }
+
+      /* typing dots */
+      .dots {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+      }
+
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--purple-light);
+        opacity: 0.4;
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+
+      .dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes pulse {
+        0%,
+        80%,
+        100% {
+          transform: scale(0.8);
+          opacity: 0.3;
+        }
+        40% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+      }
+
+      /* progress bar */
+      .thinking-progress {
+        height: 2px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .thinking-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--purple), var(--purple-light));
+        border-radius: 2px;
+        width: 0%;
+        animation: progressFlow 3s ease-in-out infinite;
+      }
+
+      @keyframes progressFlow {
+        0% {
+          width: 5%;
+          margin-left: 0;
+        }
+        50% {
+          width: 55%;
+          margin-left: 20%;
+        }
+        100% {
+          width: 5%;
+          margin-left: 95%;
+        }
+      }
+
+      /* ── INPUT BAR ───────────────────────────────────────────────── */
+      .input-bar {
+        flex-shrink: 0;
+        padding: 14px 20px 18px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+      }
+
+      .input-inner {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 3px 12px 10px 12px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      .input-inner:focus-within {
+        border-color: var(--purple);
+        box-shadow: 0 0 0 3px var(--purple-glow);
+      }
+
+      #question-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        resize: none;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+
+      #question-input::placeholder {
+        color: var(--text-dim);
+      }
+
+      #question-input::-webkit-scrollbar {
+        width: 3px;
+      }
+      #question-input::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+      }
+
+      #send-btn {
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        border: none;
+        margin-top: 5px;
+        border-radius: var(--radius-sm);
+        background: var(--purple);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+        font-size: 0.95rem;
+      }
+
+      #send-btn:hover {
+        background: #6d28d9;
+      }
+      #send-btn:active {
+        transform: scale(0.93);
+      }
+      #send-btn:disabled {
+        background: var(--surface-3);
+        color: var(--text-dim);
+        cursor: default;
+        transform: none;
+      }
+
+      .input-hint {
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        text-align: center;
+        margin-top: 8px;
+      }
+
+      .input-hint kbd {
+        background: var(--surface-3);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0px 4px;
+        font-size: 0.68rem;
+        color: var(--text-muted);
+      }
+
+      /* ── ERROR BUBBLE ────────────────────────────────────────────── */
+      .error-bubble {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+        font-size: 0.85rem;
+      }
+
+      /* ── SCROLLED DIVIDER ────────────────────────────────────────── */
+      .date-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-dim);
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .date-divider::before,
+      .date-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- HEADER -->
+      <header class="app-header">
+        <!-- EU star ring SVG -->
+        <svg
+          width="40"
+          height="40"
+          viewBox="0 0 489.09766 485.47266"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <g fill="#ffcc00" transform="translate(235.66461,237.5)">
+            <path
+              id="s"
+              d="m 0,162.5 22.041947,67.83814 -57.706566,-41.92628 h 71.329238 l -57.706566,41.92628 z"
+            />
+            <use href="#s" y="-400" />
+            <g id="s5">
+              <use href="#s" transform="translate(-100,-26.794919)" />
+              <use href="#s" transform="translate(-173.20508,-100)" />
+              <use href="#s" transform="translate(-200,-200)" />
+              <use href="#s" transform="translate(-173.20508,-300)" />
+              <use href="#s" transform="translate(-100,-373.20508)" />
+            </g>
+            <use href="#s5" transform="scale(-1,1)" />
+          </g>
+        </svg>
+
+        <div class="brand">
+          <div class="brand-name">Regu<span>Lake</span></div>
+          <div class="brand-sub">Law Assistant</div>
+        </div>
+      </header>
+
+      <!-- CHAT -->
+      <div class="chat-scroll" id="chat-scroll">
+        <div class="welcome" id="welcome-screen">
+          <h2>Ask the <em>Parliament</em></h2>
+          <p>
+            Powered by official EU legislative documents. Every answer is grounded in source text —
+            no guesswork, no inference beyond what the law says.
+          </p>
+          <div class="welcome-chips">
+            <span class="chip" onclick="fillQuestion(this)"
+              >What does GDPR say about data retention?</span
+            >
+            <span class="chip" onclick="fillQuestion(this)"
+              >AI Act obligations for high-risk systems</span
+            >
+            <span class="chip" onclick="fillQuestion(this)"
+              >Digital Services Act transparency rules</span
+            >
+            <span class="chip" onclick="fillQuestion(this)"
+              >Rights of data subjects under EU law</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- INPUT BAR -->
+      <div class="input-bar">
+        <div class="input-inner">
+          <textarea
+            id="question-input"
+            rows="1"
+            placeholder="Ask a question about EU legislation…"
+            aria-label="Your question"
+          ></textarea>
+          <button id="send-btn" title="Send (Enter)" aria-label="Send question">
+            <i class="bi bi-arrow-up"></i>
+          </button>
+        </div>
+        <div class="input-hint">
+          Press <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line
+        </div>
+      </div>
     </div>
 
-    <div id="result"></div>
-  </div>
+    <!-- jQuery + Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 
-  <script>
-    const API_URL = "http://localhost:8000/query";
+    <script>
+      /* ── THINKING MESSAGES ─────────────────────────────────────────── */
+      const THINKING_MSGS = [
+        "Consulting the Official Journal of the EU…",
+        "Cross-referencing legislative provisions…",
+        "Scanning treaty articles and recitals…",
+        "Verifying citation references…",
+        "Retrieving relevant Parliament documents…",
+        "Checking directives and regulations…",
+        "Parsing legal terminology from source text…",
+        "Searching across EU legislative corpus…",
+        "Locating applicable articles and annexes…",
+        "Grounding answer in retrieved excerpts…",
+      ];
 
-    async function sendQuery() {
-      const questionInput = document.getElementById("question");
-      const resultDiv = document.getElementById("result");
-      const loadingDiv = document.getElementById("loading");
-      const submitBtn = document.getElementById("submitBtn");
+      let thinkingTimer = null;
+      let thinkingMsgIdx = 0;
+      let progressTimer = null;
 
-      const question = questionInput.value.trim();
+      /* ── AUTO-RESIZE TEXTAREA ──────────────────────────────────────── */
+      const $input = $("#question-input");
 
-      resultDiv.innerHTML = "";
+      $input.on("input", function () {
+        this.style.height = "auto";
+        this.style.height = Math.min(this.scrollHeight, 120) + "px";
+      });
 
-      if (!question) {
-        resultDiv.innerHTML = `
-          <div class="section error">
-            Please enter a question.
-          </div>
-        `;
-        return;
+      /* ── EXAMPLE CHIPS ─────────────────────────────────────────────── */
+      function fillQuestion(el) {
+        $input.val($(el).text());
+        $input.trigger("input");
+        $input.focus();
       }
 
-      loadingDiv.style.display = "block";
-      submitBtn.disabled = true;
+      /* ── KEYBOARD SHORTCUTS ────────────────────────────────────────── */
+      $input.on("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          submitQuestion();
+        }
+      });
 
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            question: question
-          })
+      $("#send-btn").on("click", submitQuestion);
+
+      /* ── SUBMIT LOGIC ──────────────────────────────────────────────── */
+      let isLoading = false;
+
+      function submitQuestion() {
+        const question = $input.val().trim();
+        if (!question || isLoading) return;
+
+        // hide welcome on first message
+        $("#welcome-screen").fadeOut(200, function () {
+          $(this).remove();
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || "Request failed");
-        }
+        // append user bubble
+        appendBubble("user", question);
 
-        const data = await response.json();
+        // clear input
+        $input.val("").trigger("input");
 
-        let chunksHtml = "";
+        // show thinking indicator
+        isLoading = true;
+        $("#send-btn").prop("disabled", true);
+        showThinking();
 
-        if (data.retrieved_chunks && data.retrieved_chunks.length > 0) {
-          chunksHtml = data.retrieved_chunks.map((chunk, index) => {
-            return `
-              <div class="chunk">
-                <strong>Chunk ${index + 1}</strong>
-                <pre>${escapeHtml(formatChunk(chunk))}</pre>
-              </div>
-            `;
-          }).join("");
-        } else {
-          chunksHtml = "<p>No retrieved chunks returned.</p>";
-        }
+        // ── API CALL PLACEHOLDER ────────────────────────────────────────
+        // Replace this mock timeout with your real API call.
+        // Expected shape: { answer: "<string>" }
+        // On error call: handleError("Descriptive error message")
+        // On success call: handleResponse(data.answer)
+        //
+        // Example (uncomment and adapt):
+        //
+        // $.ajax({
+        //   url: '/api/ask',
+        //   method: 'POST',
+        //   contentType: 'application/json',
+        //   data: JSON.stringify({ question }),
+        //   success: function(data) { handleResponse(data.answer); },
+        //   error: function(xhr)    { handleError('The server returned an error. Please try again.'); }
+        // });
+        //
+        // ───────────────────────────────────────────────────────────────
 
-        resultDiv.innerHTML = `
-          <div class="section">
-            <h2>Question</h2>
-            <pre>${escapeHtml(data.question)}</pre>
-          </div>
+        $.ajax({
+          url: `${apiURI}/query`,
+          method: "POST",
+          data: JSON.stringify({ question: question }),
+          contentType: "application/json",
+          success: (res) => {
+            console.log(question);
 
-          <div class="section">
-            <h2>Answer</h2>
-            <pre>${escapeHtml(data.answer)}</pre>
-          </div>
-
-          <div class="section">
-            <h2>Retrieved Chunks</h2>
-            ${chunksHtml}
-          </div>
-        `;
-
-      } catch (error) {
-        resultDiv.innerHTML = `
-          <div class="section error">
-            <strong>Error:</strong>
-            <pre>${escapeHtml(error.message)}</pre>
-          </div>
-        `;
-      } finally {
-        loadingDiv.style.display = "none";
-        submitBtn.disabled = false;
-      }
-    }
-
-    function formatChunk(chunk) {
-      if (typeof chunk === "string") {
-        return chunk;
+            console.log(res);
+          },
+          error: (err) => {
+            console.error(err);
+          },
+        });
+        // MOCK — remove this block when wiring the real API:
+        setTimeout(() => {
+          const mockAnswer =
+            `Controllers and processors must implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk. ` +
+            `[Document: GDPR, Article 32, paragraph 1]\n\n` +
+            `Such measures shall take into account the state of the art, the costs of implementation, and the nature, scope, context, and purposes of processing. ` +
+            `[Document: GDPR, Article 32, paragraph 1(a)]`;
+          handleResponse(mockAnswer);
+        }, 3800);
       }
 
-      return JSON.stringify(chunk, null, 2);
-    }
+      // RESPONSE HANDLER
+      function handleResponse(answer) {
+        stopThinking();
+        appendBubble("assistant", answer);
+        isLoading = false;
+        $("#send-btn").prop("disabled", false);
+        $input.focus();
+      }
 
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-  </script>
-</body>
+      function handleError(message) {
+        stopThinking();
+        appendBubble("assistant", message || "An unexpected error occurred.", true);
+        isLoading = false;
+        $("#send-btn").prop("disabled", false);
+        $input.focus();
+      }
+
+      // BUBBLE RENDERER
+      function appendBubble(role, text, isError = false) {
+        const now = new Date();
+        const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+        const $row = $("<div>").addClass("msg-row " + role);
+
+        const extraClass = role === "assistant" && isError ? " error-bubble" : "";
+        const $bubble = $("<div>")
+          .addClass("bubble" + extraClass)
+          .text(text);
+
+        // Format citations [Document: ...] with subtle coloring
+        if (role === "assistant" && !isError) {
+          const formatted = escapeHtml(text).replace(
+            /(\[(?:Document|Source):[^\]]+\])/g,
+            '<span class="citation">$1</span>',
+          );
+          $bubble.html(formatted);
+        }
+
+        const $meta = $("<div>").addClass("msg-meta").text(time);
+
+        $row.append($bubble, $meta);
+        $("#chat-scroll").append($row);
+        scrollToBottom();
+      }
+
+      // THINKING INDICATOR
+      function showThinking() {
+        thinkingMsgIdx = 0;
+
+        const $row = $("<div>").addClass("thinking-row").attr("id", "thinking-indicator");
+
+        const $avatar = $("<div>")
+          .addClass("thinking-avatar")
+          .append($("<i>").addClass("bi bi-stars"));
+
+        const $card = $("<div>").addClass("thinking-card");
+        const $msg = $("<div>").addClass("thinking-msg").text(THINKING_MSGS[0]);
+        const $dots = $("<div>")
+          .addClass("dots")
+          .append($("<div>").addClass("dot"))
+          .append($("<div>").addClass("dot"))
+          .append($("<div>").addClass("dot"));
+        const $prog = $("<div>")
+          .addClass("thinking-progress")
+          .append($("<div>").addClass("thinking-progress-bar"));
+
+        $card.append($msg, $dots, $prog);
+        $row.append($avatar, $card);
+        $("#chat-scroll").append($row);
+        scrollToBottom();
+
+        // rotate messages every 2.2 s
+        thinkingTimer = setInterval(() => {
+          thinkingMsgIdx = (thinkingMsgIdx + 1) % THINKING_MSGS.length;
+          $msg.fadeOut(200, function () {
+            $(this).text(THINKING_MSGS[thinkingMsgIdx]).fadeIn(200);
+          });
+        }, 2200);
+      }
+
+      function stopThinking() {
+        clearInterval(thinkingTimer);
+        clearInterval(progressTimer);
+        $("#thinking-indicator").remove();
+      }
+
+      // HELPERS
+      function scrollToBottom() {
+        const el = document.getElementById("chat-scroll");
+        el.scrollTop = el.scrollHeight;
+      }
+
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;")
+          .replace(/\n/g, "<br>");
+      }
+    </script>
+  </body>
 </html>
