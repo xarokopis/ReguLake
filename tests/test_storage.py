@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 from pydantic import ValidationError
 from unittest.mock import MagicMock, patch
-from gtgh_team3_compliance_assistant.storing.Storage import ChromaVectorStore
+from gtgh_team3_compliance_assistant.storing.localStorage import ChromaVectorStore
 from gtgh_team3_compliance_assistant.models.Chunks import ChunkInput, AddChunksInput
 from gtgh_team3_compliance_assistant.models.Search import SearchInput, SearchResult
 

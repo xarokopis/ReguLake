@@ -1,7 +1,6 @@
 from typing import Any
 
 from pydantic import BaseModel, PrivateAttr
-from sentence_transformers import SentenceTransformer
 
 from openai import AzureOpenAI
 import os
@@ -35,8 +34,11 @@ class CloudEmbedder(BaseModel):
         return response.data[0].embedding
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        response = self._model.embeddings.create(
-            model=self._config["deployment"],
-            input=texts
-        )
-        return response.data[0].embedding
+        returned_embeddings = list()
+        for text in texts:
+            response = self._model.embeddings.create(
+                model=self._config["deployment"],
+                input=text
+            )
+            returned_embeddings.append(response.data[0].embedding)
+        return returned_embeddings

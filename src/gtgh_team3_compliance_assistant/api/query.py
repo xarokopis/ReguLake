@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from gtgh_team3_compliance_assistant.embedding.LocalEmbedder import LocalEmbedder
 from gtgh_team3_compliance_assistant.model_communication.llm import ChatLLM
 from gtgh_team3_compliance_assistant.pipeline.rag_pipeline import RAGPipeline
-from gtgh_team3_compliance_assistant.storing.Storage import ChromaVectorStore
+from gtgh_team3_compliance_assistant.storing.localStorage import ChromaVectorStore
 from gtgh_team3_compliance_assistant.config import (
     CHROMA_PATH,
     COLLECTION_NAME,
