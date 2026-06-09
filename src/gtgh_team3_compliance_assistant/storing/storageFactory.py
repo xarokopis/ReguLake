@@ -9,7 +9,7 @@ from gtgh_team3_compliance_assistant.storing.localStorage import ChromaVectorSto
 
 
 class StorageFactory(BaseModel):
-    storage_type = Literal["local", "cloud"] = "cloud"
+    storage_type: Literal['local', 'cloud'] = 'cloud'
     persist_path: str = None
     index_collection_name: str = None
     _storage_model: ChromaVectorStore | CloudStorage = PrivateAttr()
@@ -30,10 +30,10 @@ class StorageFactory(BaseModel):
         if self.storage_type != "cloud":
             raise ValueError("I don't know how you got here but the storage type has to be either 'local' or 'cloud'")
         
-        self._storage_model.createIndex()
+        self._storage_model.recreateIndex()
     
     def search(self, input_data: SearchInput) -> list:
-        self._storage_model.search(input_data)
+        return self._storage_model.search(input_data)
     
     def add_chunks(self, input_data: AddChunksInput) -> None:
         self._storage_model.add_chunks(input_data)

@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from gtgh_team3_compliance_assistant.embedding.LocalEmbedder import LocalEmbedder
+from gtgh_team3_compliance_assistant.embedding.EmbedderFactory import EmbedderFactory
 from gtgh_team3_compliance_assistant.model_communication.llm import ChatLLM
 from gtgh_team3_compliance_assistant.pipeline.rag_pipeline import RAGPipeline
+from gtgh_team3_compliance_assistant.embedding.LocalEmbedder import LocalEmbedder
 from gtgh_team3_compliance_assistant.storing.localStorage import ChromaVectorStore
+from gtgh_team3_compliance_assistant.storing.storageFactory import StorageFactory
 from gtgh_team3_compliance_assistant.config import (
     CHROMA_PATH,
     COLLECTION_NAME,
@@ -13,11 +15,8 @@ from gtgh_team3_compliance_assistant.config import (
 
 router = APIRouter()
 
-embedding_model = LocalEmbedder(model_name=EMBEDDING_MODEL_NAME)
-vector_store = ChromaVectorStore(
-    persist_path=str(CHROMA_PATH),
-    collection_name=COLLECTION_NAME,
-)
+embedding_model = EmbedderFactory(picked_model='cloud')
+vector_store = StorageFactory(storage_type='cloud', index_collection_name="team03")
 llm = ChatLLM()
 rag = RAGPipeline(
     pdf_path=None,

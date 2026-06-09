@@ -2,18 +2,18 @@ from pydantic import BaseModel, field_validator
 
 
 class ChunkInput(BaseModel):
-    chunk_uid: str
-    chunk_id: int
-    type: str
+    chunk_uid: str = None
+    chunk_id: int = None
+    type: str = None
     article_number: str | None = None
     annex_number: str | None = None
     title: str | None = None
-    text: str
-    source_file: str
+    text: str = None
+    source_file: str = None
     page: int | None = None
     part_index: int = 0
     part_count: int = 1
-    char_length: int
+    char_length: int = None
     law_passed_date: str | None = None
     ingested_at: str | None = None
     regulation_title: str | None = None
