@@ -10,8 +10,7 @@ def runAPI(args):
     port = args.port;
     host = args.host;
     dev_env = args.dev;
-    print(f"Attempt to run API on host {host}, port {port}, as dev {dev_env} ")
-    return
+    print(f"Attempting to run API on host {host}, port {port}, as dev {dev_env} ")
 
     # All API imports
     import uvicorn
