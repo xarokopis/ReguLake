@@ -28,14 +28,14 @@ class CloudEmbedder(BaseModel):
         )
 
     def embed_query(self, text: str) -> list[float]:
-        response = self.client.embeddings.create(
+        response = self._model.embeddings.create(
             model=self._config["deployment"],
             input=text
         )
         return response.data[0].embedding
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        response = self.client.embeddings.create(
+        response = self._model.embeddings.create(
             model=self._config["deployment"],
             input=texts
         )

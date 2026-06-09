@@ -25,7 +25,8 @@ class EmbedderFactory(BaseModel):
     def get_model(self) -> LocalEmbedder | CloudEmbedder:
         return self.model;
 
-if __name__ == "__main__":
-    embedder_factory = EmbedderFactory(picked_model='cloud')
-    embedder_model = embedder_factory.get_model()
-    print(embedder_factory)
+    def embed_query(self, text: str) -> list[float]:
+        return self.model.embed_query(text);
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return self.model.embed_documents(texts)
