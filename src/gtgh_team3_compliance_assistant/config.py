@@ -17,6 +17,7 @@ CHROMA_PATH = BASE_DIR / "chroma_db"
 
 METADATA_DIR = DATA_DIR / "metadata"
 METADATA_FILE = METADATA_DIR / "documents.json"
+LOGS_FILE = BASE_DIR / "logs" / "rag.log"
 
 for _dir in (PDF_DIR, EXTRACTED_DIR, CHUNK_DIR, METADATA_DIR):
     _dir.mkdir(parents=True, exist_ok=True)

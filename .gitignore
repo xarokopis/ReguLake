@@ -18,9 +18,13 @@ chroma_db/
 data/chunks/
 data/metadata/
 data/extracted/
+data/embeds/
 
 # IDE
 .vscode
 
 # random pdfs
 README.pdf
+
+# Log Files
+*.log

@@ -8,7 +8,7 @@ from gtgh_team3_compliance_assistant.processing.chunk_storing import ChunkStore
 from gtgh_team3_compliance_assistant.ingestion.metadata_storing import MetadataStore
 from gtgh_team3_compliance_assistant.models.chunks import ChunkInput, AddChunksInput
 from gtgh_team3_compliance_assistant.models.search import SearchInput
-
+from gtgh_team3_compliance_assistant.logger.Logger import log
 
 class RAGPipeline:
 
@@ -20,12 +20,14 @@ class RAGPipeline:
         self.extractor = TextExtractor()
         self.chunker = EurChunker()
         self.chunk_store = ChunkStore()
+        log.info("RAGPipeline initialized", pdf=str(self.pdf_path), llm=llm is not None)
 
     def ingest(self):
         if self.pdf_path is None:
+            log.error("ingest() called but pdf_path is not set")
             raise ValueError("pdf_path is not set")
 
-        print(f"\nReading: {self.pdf_path.name}")
+        log.info("Ingestion started", file=self.pdf_path.name)
         # Extract Text from pdf
         doc_meta, ingested_at, raw_chunks = self.chunk_pdf()
 
@@ -36,20 +38,22 @@ class RAGPipeline:
             source_pdf=str(self.pdf_path),
             doc_meta=doc_meta,
         )
-        print(f"Saved chunks to data/chunks/{self.pdf_path.stem}.json")
+        log.info("Chunks saved to disk", file=self.pdf_path.stem)
 
         chunk_models = self._create_chunk_models(raw_chunks, doc_meta, ingested_at)
-        print(f"ChunkInput models created: {len(chunk_models)}")
+        log.info("Chunk models created", count=len(chunk_models))
         
-        embeddings = self.embedding_model.embed_documents(
-            [chunk.text for chunk in chunk_models]
-        )
-        print(f"Embeddings created: {len(embeddings)}")
+        with log.timer("embedding", file=self.pdf_path.name):
+            embeddings = self.embedding_model.embed_documents(
+                [chunk.text for chunk in chunk_models]
+            )
+
+        if len(embeddings) != len(chunk_models): 
+            log.warning("Embedding/chunk count mismatch", chunks=len(chunk_models), embeddings=len(embeddings))
 
         add_input = AddChunksInput(chunks=chunk_models, embeddings=embeddings)
         self.vector_store.add_chunks(add_input)
-
-        print("Chunks Saved")
+        log.info("Chunks uploaded to vector store", count=len(chunk_models))
 
         MetadataStore().add({
             "document_id": self.pdf_path.stem,
@@ -61,27 +65,36 @@ class RAGPipeline:
             "ingested_at": ingested_at,
             "chunk_count": len(chunk_models),
         })
+        log.info("Metadata stored", document_id=self.pdf_path.stem)
 
     def chunk_pdf(self):
+        log.info("Extracting text from PDF", file=self.pdf_path.name)
         text, pages = self.extractor.extract(str(self.pdf_path))
-        print(f"Extracted {len(text)} characters across {len(pages)} pages")
+        log.info("Text extracted", chars=len(text), pages=len(pages))
 
         doc_meta = self.extractor.extract_metadata(pages[0])
+        log.debug("Metadata extracted", regulation=doc_meta.get("regulation_title"), version=doc_meta.get("document_version"))
         ingested_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
         raw_chunks = self.chunker.chunk(text)
-        print(f"Created {len(raw_chunks)} chunks")
+        log.info("PDF chunked", chunk_count=len(raw_chunks))
 
         self._tag_pages(raw_chunks, pages)
         return doc_meta, ingested_at, raw_chunks
 
     def retrieve(self, question: str, top_k: int = 5):
-        query_embedding = self.embedding_model.embed_query(question)
-        return self.vector_store.search(
-            SearchInput(query_embedding=query_embedding, top_k=top_k)
-        )
+        log.info("Retrieving chunks", question=question[:120], top_k=top_k)
+        with log.timer("vector search"):
+            results = self.vector_store.search(
+                SearchInput(query_embedding=self.embedding_model.embed_query(question), top_k=top_k)
+            )
+        log.info("Retrieval complete", hits=len(results))
+        return results
 
     def build_context(self, results):
+        if not results:
+            log.warning("build_context called with empty results")
+
         parts = []
         for r in results:
             m = r.metadata
@@ -106,16 +119,23 @@ class RAGPipeline:
 
             header = f"[{doc_ref} | {location} | Page {page}]"
             parts.append(f"{header}\n{r.content}")
-
-        return "\n\n---\n\n".join(parts)
+        
+        context = "\n\n---\n\n".join(parts)
+        log.debug("Context built", chunks=len(results), chars=len(context))
+        return context
 
     def ask(self, question: str, top_k: int = 5):
         if self.llm is None:
+            log.error("ask() called but no LLM is configured")
             raise ValueError("No LLM configured")
+        log.info("Ask started", question=question[:120])
 
         results = self.retrieve(question, top_k)
         context = self.build_context(results)
-        answer = self.llm.generate(question=question, context=context)
+        with log.timer("llm generation"):
+            answer = self.llm.generate(question=question, context=context)
+        
+        log.info("Answer generated", question=question[:120])
 
         return {
             "question": question,
@@ -176,6 +196,7 @@ class RAGPipeline:
 
     def _create_chunk_models(self, raw_chunks: list, metadata: dict, ingested_at: str) -> list:
         returned_list = []
+        failed = 0
         for idx, chunk in enumerate(raw_chunks):
             chunk_uid = self._build_uid(self.pdf_path.stem, chunk, idx)
 
@@ -202,8 +223,9 @@ class RAGPipeline:
                 returned_list.append(model)
 
             except Exception as e:
-                print(f"Chunk failed: {idx}")
-                print(chunk)
+                failed += 1
+                log.error("Chunk model creation failed", exc=e, chunk_id=idx, chunk=chunk)
                 raise e
         
+        log.info("Chunk models built", total=len(returned_list), failed=failed)
         return returned_list

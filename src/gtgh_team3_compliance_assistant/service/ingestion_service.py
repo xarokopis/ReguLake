@@ -1,10 +1,12 @@
 import re
 from pathlib import Path
+from time import perf_counter
 
 from gtgh_team3_compliance_assistant.processing.text_extractor import TextExtractor
 from gtgh_team3_compliance_assistant.processing.eur_chunker import EurChunker
 from gtgh_team3_compliance_assistant.processing.chunk_storing import ChunkStore
 from gtgh_team3_compliance_assistant.processing.text_storing import ExtractedTextStore
+from gtgh_team3_compliance_assistant.logger.Logger import log
 
 
 LAW_PASSED_DATES = {
@@ -21,30 +23,40 @@ class IngestionService:
         self.extracted_store = ExtractedTextStore()
 
     def process_local_pdf(self, pdf_path: str):
+        start_time = perf_counter()
         pdf_path = Path(pdf_path)
         document_name = pdf_path.stem
 
-        print(f"Processing: {document_name}")
+        log.info(f"Processing document: {document_name}", file_path=str(pdf_path))
 
-        text, pages = self.extractor.extract(str(pdf_path))
-        print(f"Extracted {len(text)} characters across {len(pages)} pages")
+        with log.timer("pdf text extraction", document_name=document_name):
+            text, pages = self.extractor.extract(str(pdf_path))
+
+        log.info("Extracted text successfully", char_count=len(text), page_count=len(pages))
 
         extracted_path = self.extracted_store.save(document_name, text)
-        print(f"Saved extracted text: {extracted_path}")
+        log.debug(f"Saved extracted text raw dump", destination=str(extracted_path))
 
-        chunks = self.chunker.chunk(text)
-        self._tag_pages(chunks, pages)
+        with log.timer("document chunking", document_name=document_name):
+            chunks = self.chunker.chunk(text)
+        self._tag_pages(chunks, pages, document_name)
 
-        print(f"Created {len(chunks)} chunks")
+        with log.timer("saving chunks to store", document_name=document_name):
+            self.chunk_store.save(
+                document_id=document_name,
+                chunks=chunks,
+                source_pdf=str(pdf_path),
+                law_passed_date=LAW_PASSED_DATES.get(document_name),
+            )
 
-        self.chunk_store.save(
-            document_id=document_name,
-            chunks=chunks,
-            source_pdf=str(pdf_path),
-            law_passed_date=LAW_PASSED_DATES.get(document_name),
+        skipped_chunks = sum(1 for c in chunks if c.get("page") is None)
+        duration = perf_counter() - start_time
+        log.log_ingestion(
+            filename=pdf_path.name,
+            chunks=len(chunks),
+            skipped=skipped_chunks,
+            duration_s=duration
         )
-
-        print(f"Saved chunks: {document_name}.json")
 
         return {
             "document_name": document_name,
@@ -52,11 +64,21 @@ class IngestionService:
             "chunk_count": len(chunks),
         }
 
-    def _tag_pages(self, chunks, pages):
+    def _tag_pages(self, chunks, pages, document_name: str):
         normalized_pages = [re.sub(r"\s+", " ", p).lower() for p in pages]
 
-        for chunk in chunks:
+        for idx, chunk in enumerate(chunks):
+            page_num = self._find_page(chunk, normalized_pages)
             chunk["page"] = self._find_page(chunk, normalized_pages)
+
+            if page_num is None:
+                log.warning(
+                    f"Orphan chunk detected: alignment failed", 
+                    document=document_name,
+                    chunk_index=idx,
+                    chunk_type=chunk.get("type"),
+                    article_number=chunk.get("article_number")
+                )
 
     def _find_page(self, chunk, normalized_pages):
         text = chunk["text"]

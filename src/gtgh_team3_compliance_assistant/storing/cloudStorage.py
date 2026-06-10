@@ -22,6 +22,8 @@ import dotenv
 from pydantic import BaseModel, PrivateAttr
 dotenv.load_dotenv()
 
+from gtgh_team3_compliance_assistant.logger.Logger import log
+
 TEAM_NAME = "team03"
 endpoint=os.getenv("AZURE_SEARCH_ENDPOINT") or os.getenv("AI_SEARCH_ENDPOINT")
 admin_key = os.getenv("AZURE_SEARCH_KEY") or os.getenv("AI_SEARCH_API_KEY")
@@ -92,9 +94,9 @@ class CloudStorage(BaseModel):
 
         try:
             index_client.get_index(name=TEAM_NAME)
-            print(f"Index '{TEAM_NAME}' already exists.")
+            log.info(f"Index '{TEAM_NAME}' already exists.")
         except ResourceNotFoundError:
-            print(f"Index '{TEAM_NAME}' not found. Creating it now...")
+            log.info(f"Index '{TEAM_NAME}' not found. Creating it now...")
             index = SearchIndex(name=TEAM_NAME, fields=DEFAULT_FIELDS, vector_search=self._vector_search)
             index_client.create_index(index)
     
@@ -105,16 +107,15 @@ class CloudStorage(BaseModel):
         )
 
         try:
-            print(f"Deleting index '{TEAM_NAME}' if it exists...")
+            log.info(f"Deleting index '{TEAM_NAME}' if it exists...")
             index_client.delete_index(TEAM_NAME)
-            print("Old index deleted successfully.")
         except ResourceNotFoundError:
-            print("Index didn't exist yet, skipping deletion.")
+            log.info(f"Index {TEAM_NAME} didn't exist yet, skipping deletion.")
         
         new_index_definition = SearchIndex(name=TEAM_NAME, fields=fields, vector_search=self._vector_search)
-        print(f"Creating fresh index '{TEAM_NAME}'...")
+        log.info(f"Creating fresh index '{TEAM_NAME}'...")
         index_client.create_index(new_index_definition)
-        print("Index recreated successfully!")
+        log.info(f"Index '{TEAM_NAME}' recreated successfully!")
     
     def add_chunks(self, input: AddChunksInput) -> None:
         documents = self._process_chunks(input)
@@ -181,11 +182,3 @@ class CloudStorage(BaseModel):
             {**chunk.model_dump(), "embedding": emb}
             for chunk, emb in zip(input_data.chunks, input_data.embeddings)
         ]
-
-
-
-if __name__ == "__main__":
-
-    cloud_storage = CloudStorage()
-    cloud_storage.createIndex(DEFAULT_FIELDS)
-    print("Index created.")

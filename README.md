@@ -1,11 +1,3 @@
-uv sync /////
-
-uv run -m scripts.ingest /////
-
-uv run uvicorn gtgh_team3_compliance_assistant.main:app --reload /////
-
-run databricks api `uv run uvicorn gtgh_team3_compliance_assistant.main_databricks:app --reload`
-
 ## Prerequisites
 
 Ensure your virtual environment is activated and dependencies are installed:
@@ -24,13 +16,13 @@ uv run -m gtgh_team3_compliance_assistant.main --help
 
 ### Running API Server
 
-Basic Usage:
+**Basic Usage:**
 
 ```bash
 uv run -m gtgh_team3_compliance_assistant.main api
 ```
 
-Advanced Usage:
+**Advanced Usage:**
 
 ```bash
 uv run -m gtgh_team3_compliance_assistant.main api -p 5000 -H 0.0.0.0 --dev
@@ -52,16 +44,16 @@ uv run -m gtgh_team3_compliance_assistant.main api --help
 
 ### Running Data Ingestion Pipeline
 
-Basic Usage:
+**Basic Usage:**
 
 ```bash
 uv run -m gtgh_team3_compliance_assistant.main ingest
 ```
 
-Advanced Usage:
+**Advanced Usage:**
 
 ```bash
-uv run -m gtgh_team3_compliance_assistant.main ingest --source ./data/custom_source.json
+uv run -m gtgh_team3_compliance_assistant.main ingest --source path/to/source/file.json
 ```
 
 Available Flags:
@@ -80,7 +72,7 @@ uv run -m gtgh_team3_compliance_assistant.main ingest --help
 ### Running Azure Store Functionality
 
 ```bash
-uv run -m gtgh_team3_compliance_assistant.main store --source data/chunks/json_name.json
+uv run -m gtgh_team3_compliance_assistant.main store --source path/to/source/file.json
 ```
 
 Available Flags:
@@ -102,3 +94,34 @@ Available Flags:
 | Long Flag  | Short Flag | Type |
 | :--------: | :--------: | :--: |
 | --question |     -q     | str  |
+
+### Running Azure Embed Functionality
+
+**Basic Usage:**
+
+```bash
+uv run -m gtgh_team3_compliance_assistant.main embed
+```
+
+Available Flags:
+
+|   Long Flag    | Short Flag | Type |             Required              |
+| :------------: | :--------: | :--: | :-------------------------------: |
+|    --source    |     -s     | str  |                Yes                |
+| --limit-chunks |     -l     | bool |                No                 |
+| --save-embeds  |    -se     | bool |                No                 |
+| --destination  |     -d     | str  | Yes, if "--save-embeds" is passed |
+
+**Advanced Usage:**
+
+```bash
+uv run -m gtgh_team3_compliance_assistant.main embed --source path/to/source/file.json --limit-chunks -save-embeds -destination path/to/destination/file.json
+```
+
+uv sync /////
+
+uv run -m scripts.ingest /////
+
+uv run uvicorn gtgh_team3_compliance_assistant.main:app --reload /////
+
+run databricks api `uv run uvicorn gtgh_team3_compliance_assistant.main_databricks:app --reload`
