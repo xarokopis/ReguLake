@@ -12,35 +12,11 @@ def runAPI(args):
     port = args.port;
     host = args.host;
     dev_env = args.dev;
-    print(f"Attempting to run API on host {host}, port {port}, as dev {dev_env} ")
+    print(f"Attempting to run API on host {host}, port {port}, as dev {'in development mode' if(dev_env) else 'in production mode'}")
 
     # All API imports
     import uvicorn
-    from fastapi import FastAPI
-    from fastapi.middleware.cors import CORSMiddleware
-
-    from gtgh_team3_compliance_assistant.api.health import router as health_router
-    from gtgh_team3_compliance_assistant.api.ingestion import router as ingestion_router
-    from gtgh_team3_compliance_assistant.api.query import router as query_router
-
-    app = FastAPI(title="Compliance Assistant")
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    app.include_router(health_router)
-    app.include_router(ingestion_router)
-    app.include_router(query_router)
-
-    @app.get("/")
-    def root():
-        return {"message": "running"}
-    
-    uvicorn.run(app, host=host, port=port, reload=dev_env)
+    uvicorn.run("gtgh_team3_compliance_assistant.api.run:app", host=host, port=port, reload=dev_env)
 
 def runIngestion(args):
     source = args.source # source path or None
