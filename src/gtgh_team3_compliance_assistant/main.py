@@ -6,7 +6,7 @@ from pathlib import Path
 
 import argparse
 
-
+from gtgh_team3_compliance_assistant.config import RUN_MODE
 
 def runAPI(args):
     port = args.port;
@@ -82,8 +82,8 @@ def runIngestion(args):
     METADATA_FILE.write_text("[]")
     print("Cleared documents.json\n")
 
-    embedding_model = EmbedderFactory(picked_model='cloud')
-    vector_store = StorageFactory(storage_type='cloud', index_collection_name=os.getenv("CLOUD_EMBEDDING_MODEL_NAME"))
+    embedding_model = EmbedderFactory(picked_model=RUN_MODE)
+    vector_store = StorageFactory(storage_type=RUN_MODE, index_collection_name=os.getenv("CLOUD_EMBEDDING_MODEL_NAME"))
     if recreate_index:
         vector_store.create()
 
@@ -155,7 +155,7 @@ def runStorage(args):
             raise e
 
     print("Created chunks")
-    embedding_factory = EmbedderFactory(picked_model='cloud')
+    embedding_factory = EmbedderFactory(picked_model=RUN_MODE)
     print("Creating Embeds")
     embeddings = embedding_factory.embed_documents(
         [chunk.text for chunk in chunk_models]
@@ -163,7 +163,7 @@ def runStorage(args):
     print("len(embeddings) ==================== ", len(embeddings))
     print("len(embeddings[0]) ==================== ", len(embeddings[0]))
     print("len(chunks) ==================== ", len(raw_chunks))
-    storage_factory = StorageFactory(storage_type='cloud', index_collection_name="team03")
+    storage_factory = StorageFactory(storage_type=RUN_MODE, index_collection_name="team03")
     if recreate_index:
         storage_factory.create()
 
@@ -178,8 +178,8 @@ def runSearch(args):
     from azure.core.paging import ItemPaged
     from pprint import pprint
 
-    storage_factory = StorageFactory(storage_type='cloud', index_collection_name='team03')
-    embedding_factory = EmbedderFactory(picked_model='cloud')
+    storage_factory = StorageFactory(storage_type=RUN_MODE, index_collection_name='team03')
+    embedding_factory = EmbedderFactory(picked_model=RUN_MODE)
     embedded_prompt = embedding_factory.embed_query(question)
 
     result: ItemPaged = storage_factory.search(SearchInput(query_embedding=embedded_prompt))

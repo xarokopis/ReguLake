@@ -622,6 +622,8 @@
       </div>
     </div>
 
+    <div class="modal fade" id="modal"></div>
+
     <!-- jQuery + Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
@@ -693,54 +695,42 @@
         $("#send-btn").prop("disabled", true);
         showThinking();
 
-        // ── API CALL PLACEHOLDER ────────────────────────────────────────
-        // Replace this mock timeout with your real API call.
-        // Expected shape: { answer: "<string>" }
-        // On error call: handleError("Descriptive error message")
-        // On success call: handleResponse(data.answer)
-        //
-        // Example (uncomment and adapt):
-        //
-        // $.ajax({
-        //   url: '/api/ask',
-        //   method: 'POST',
-        //   contentType: 'application/json',
-        //   data: JSON.stringify({ question }),
-        //   success: function(data) { handleResponse(data.answer); },
-        //   error: function(xhr)    { handleError('The server returned an error. Please try again.'); }
-        // });
-        //
-        // ───────────────────────────────────────────────────────────────
-
         $.ajax({
           url: `${apiURI}/query`,
           method: "POST",
           data: JSON.stringify({ question: question }),
           contentType: "application/json",
           success: (res) => {
-            console.log(question);
+            metadatas = res.retrieved_chunks.map((item) => item.metadata)
+            
+            const references = Object.values(
+              metadatas.reduce((acc, { source_file, page }) => {
+                if (!acc[source_file]) {
+                  acc[source_file] = { file: source_file, pages: new Set() };
+                }
+                acc[source_file].pages.add(page);
+                return acc;
+              }, {})
+            ).map(({ file, pages }) => ({ file, pages: [...pages] }));
 
-            console.log(res);
+            answer = res.answer;
+
+            if(answer.includes("The provided document excerpts do not contain sufficient information to answer this question")){
+              handleResponse(answer);
+            } else {
+              handleResponse(answer, references);
+            }
           },
           error: (err) => {
-            console.error(err);
+            handleError(err);
           },
         });
-        // MOCK — remove this block when wiring the real API:
-        setTimeout(() => {
-          const mockAnswer =
-            `Controllers and processors must implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk. ` +
-            `[Document: GDPR, Article 32, paragraph 1]\n\n` +
-            `Such measures shall take into account the state of the art, the costs of implementation, and the nature, scope, context, and purposes of processing. ` +
-            `[Document: GDPR, Article 32, paragraph 1(a)]`;
-          handleResponse(mockAnswer);
-        }, 3800);
       }
 
       // RESPONSE HANDLER
-      function handleResponse(answer) {
+      function handleResponse(answer, references) {
         stopThinking();
-        appendBubble("assistant", answer);
+        appendBubble("assistant", answer, references);
         isLoading = false;
         $("#send-btn").prop("disabled", false);
         $input.focus();
@@ -755,7 +745,7 @@
       }
 
       // BUBBLE RENDERER
-      function appendBubble(role, text, isError = false) {
+      function appendBubble(role, text, references = null, isError = false) {
         const now = new Date();
         const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -773,6 +763,37 @@
             '<span class="citation">$1</span>',
           );
           $bubble.html(formatted);
+        }
+        const badges = [];
+
+        if(references) {
+          references.forEach(reference => {
+            const $ref = $("<span>")
+              .addClass("badge m-1")
+              .text(reference.file)
+              .css({"background-color": "var(--purple-light)", padding: ".35rem", cursor: "pointer"})
+              .on("click", () => {
+                /**
+                 * <object data="myfile.pdf" type="application/pdf" width="100%" height="100%">
+                    <p>Alternative text - include a link <a href="myfile.pdf">to the PDF!</a></p>
+                  </object>
+                 */
+                const $pdfViewer = $("<object>")
+                  .attr({ type: "application/pdf", data: `../../../data/pdfs/${reference.file}` })
+                  .css({ width: "100%", height: "100%" });
+
+                $("#modal").append($pdfViewer);
+
+                console.log(reference);
+              });
+              badges.push($ref);
+          });
+        }
+        if (badges.length > 0) $bubble.append($("<br>"))
+        for (const $badge of badges) {
+          console.log("$badge =============== ", $badge)
+          
+          $bubble.append($badge)
         }
 
         const $meta = $("<div>").addClass("msg-meta").text(time);

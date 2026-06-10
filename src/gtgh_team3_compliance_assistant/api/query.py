@@ -11,12 +11,13 @@ from gtgh_team3_compliance_assistant.config import (
     CHROMA_PATH,
     COLLECTION_NAME,
     EMBEDDING_MODEL_NAME,
+    RUN_MODE,
 )
 
 router = APIRouter()
 
-embedding_model = EmbedderFactory(picked_model='cloud')
-vector_store = StorageFactory(storage_type='cloud', index_collection_name="team03")
+embedding_model = EmbedderFactory(picked_model=RUN_MODE)
+vector_store = StorageFactory(storage_type=RUN_MODE, index_collection_name="team03")
 llm = ChatLLM()
 rag = RAGPipeline(
     pdf_path=None,
