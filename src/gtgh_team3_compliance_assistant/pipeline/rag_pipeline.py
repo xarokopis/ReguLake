@@ -91,7 +91,7 @@ class RAGPipeline:
 
             article = m.get('article_number')
             annex = m.get('annex_number')
-            page = m.get('page_number', '?')
+            page = m.get('page', m.get('page_number', '?'))
             part_index = m.get('part_index', 0)
             part_count = m.get('part_count', 1)
 

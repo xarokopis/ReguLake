@@ -1,5 +1,5 @@
 from gtgh_team3_compliance_assistant.models.chunks import AddChunksInput
-from gtgh_team3_compliance_assistant.models.search import SearchInput
+from gtgh_team3_compliance_assistant.models.search import SearchInput, SearchResult
 
 from azure.core.exceptions import ResourceNotFoundError
 from azure.search.documents import SearchClient
@@ -23,8 +23,8 @@ from pydantic import BaseModel, PrivateAttr
 dotenv.load_dotenv()
 
 TEAM_NAME = "team03"
-endpoint=os.getenv("AZURE_SEARCH_ENDPOINT")
-admin_key = os.getenv("AZURE_SEARCH_KEY")
+endpoint=os.getenv("AI_SEARCH_ENDPOINT")
+admin_key = os.getenv("AI_SEARCH_API_KEY")
 
 DEFAULT_FIELDS = [
     SimpleField(name="chunk_uid",         type=SearchFieldDataType.String,  key=True),
@@ -60,7 +60,7 @@ class CloudStorage(BaseModel):
     _fields: list = PrivateAttr()
 
     def model_post_init(self, __context):
-        admin_key = os.getenv("AZURE_SEARCH_KEY")
+        admin_key = os.getenv("AI_SEARCH_API_KEY")
         if not admin_key:
             raise Exception("Azure Admin key does not exist")
         self._client = SearchClient(
@@ -124,7 +124,7 @@ class CloudStorage(BaseModel):
             documents=documents
         )
 
-    def search(self, input: SearchInput) -> list:
+    def search(self, input: SearchInput) -> list[SearchResult]:
         results = self._client.search(
             search_text=None,
             vector_queries=[
@@ -135,26 +135,33 @@ class CloudStorage(BaseModel):
                 )
             ],
             select=[
-                "chunk_uid",
-                "chunk_id",
-                "source_file",
-                "regulation_title",
-                "document_version",
-                "issuing_authority",
-                "law_passed_date",
-                "ingested_at",
-                "type",
-                "article_number",
-                "annex_number",
-                "page",
-                "part_index",
-                "part_count",
-                "char_length",
-                "text",
-                "title"
+                "chunk_uid", "chunk_id", "source_file", "regulation_title",
+                "document_version", "issuing_authority", "law_passed_date", "ingested_at",
+                "type", "article_number", "annex_number", "page", "part_index",
+                "part_count", "char_length", "text", "title"
             ]
         )
-        return results
+
+        search_results = []
+        for row in results:
+            search_results.append(SearchResult(
+                chunk_uid=row["chunk_uid"],
+                content=row["text"],
+                metadata={
+                    "source_file": row.get("source_file", ""),
+                    "regulation_title": row.get("regulation_title", ""),
+                    "document_version": row.get("document_version", ""),
+                    "article_number": row.get("article_number", ""),
+                    "annex_number": row.get("annex_number", ""),
+                    "page": row.get("page"),
+                    "part_index": row.get("part_index", 0),
+                    "part_count": row.get("part_count", 1),
+                    "type": row.get("type", ""),
+                    "title": row.get("title", ""),
+                },
+                distance=1.0 - row.get("@search.score", 0.0),
+            ))
+        return search_results
     
     def _process_chunks(self, input_data: AddChunksInput) -> list[dict]:
         return [
