@@ -9,7 +9,7 @@ from gtgh_team3_compliance_assistant.embedding.EmbedderFactory import EmbedderFa
 from gtgh_team3_compliance_assistant.models.chunks import ChunkInput
 from gtgh_team3_compliance_assistant.logger.Logger import log
 
-def run_embed(source: str, limit_chunks: bool, save_embeds: bool, destination: str):
+def run_embed(source: str, limit_chunks: bool, save_embeds: bool = False, destination: str= ""):
     log.info("Embedding started", source=source, limit_chunks=limit_chunks, destination=destination)
 
     with open(source, 'r') as file:

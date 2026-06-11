@@ -1,6 +1,7 @@
 
-import argparse
 from __future__ import annotations
+import argparse
+
 from gtgh_team3_compliance_assistant.logger.Logger import log
 
 def runAPI(args):
@@ -104,8 +105,6 @@ def main():
     parser_ingestion.set_defaults(func=runEmbed)
 
     args = parser.parse_args()
-    if args.save_embeds and not args.destination:
-        parser_ingestion.error("The --destination (-d) argument is required when --save-embeds is enabled.")
     args.func(args)
 
 if __name__ == "__main__":
