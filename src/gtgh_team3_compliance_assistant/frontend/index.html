@@ -297,6 +297,15 @@
         opacity: 0.85;
       }
 
+      .bubble .citation-link {
+        cursor: pointer;
+        text-decoration: underline dotted;
+      }
+
+      .bubble .citation-link:hover {
+        opacity: 1;
+      }
+
       .msg-meta {
         font-size: 0.68rem;
         color: var(--text-dim);
@@ -652,6 +661,12 @@
                 text-transform: uppercase;
               "
             ></h6>
+            <a
+              id="pdf-fallback-link"
+              href="#"
+              target="_blank"
+              style="color: var(--purple-light); font-size: 0.8rem; margin-right: 1rem;"
+            >Open in new tab</a>
             <button
               type="button"
               class="btn-close btn-close-white"
@@ -659,18 +674,7 @@
             ></button>
           </div>
           <div class="modal-body p-0" style="height: 100%">
-            <object id="pdf-viewer" type="application/pdf" style="width: 100%; height: 100%">
-              <p style="color: var(--text-muted); padding: 20px">
-                Your browser cannot display PDFs inline.
-                <a
-                  id="pdf-fallback-link"
-                  href="#"
-                  target="_blank"
-                  style="color: var(--purple-light)"
-                  >Open in new tab</a
-                >
-              </p>
-            </object>
+            <iframe id="pdf-viewer" style="width: 100%; height: 100%; border: none;"></iframe>
           </div>
         </div>
       </div>
@@ -748,20 +752,18 @@
           data: JSON.stringify({ question: question }),
           contentType: "application/json",
           success: (res) => {
-            metadatas = res.retrieved_chunks.map((item) => item.metadata);
-            console.log("🚀 ~ submitQuestion ~ metadatas:", metadatas);
+            const chunkMap = {};
+            res.retrieved_chunks.forEach((chunk) => {
+              const page = chunk.metadata.page;
+              if (page != null) {
+                chunkMap[page] = {
+                  file: chunk.metadata.source_file,
+                  title: chunk.metadata.regulation_title || chunk.metadata.title || "",
+                };
+              }
+            });
 
-            const references = Object.values(
-              metadatas.reduce((acc, { source_file, title, page }) => {
-                if (!acc[source_file]) {
-                  acc[source_file] = { file: source_file, title: title, pages: new Set() };
-                }
-                acc[source_file].pages.add(page);
-                return acc;
-              }, {}),
-            ).map(({ file, title, pages }) => ({ file, title, pages: [...pages] }));
-
-            answer = res.answer;
+            const answer = res.answer;
 
             if (
               answer.includes(
@@ -770,7 +772,7 @@
             ) {
               handleResponse(answer);
             } else {
-              handleResponse(answer, references);
+              handleResponse(answer, chunkMap);
             }
           },
           error: (err) => {
@@ -780,9 +782,9 @@
       }
 
       // RESPONSE HANDLER
-      function handleResponse(answer, references) {
+      function handleResponse(answer, chunkMap) {
         stopThinking();
-        appendBubble("assistant", answer, references);
+        appendBubble("assistant", answer, chunkMap);
         isLoading = false;
         $("#send-btn").prop("disabled", false);
         $input.focus();
@@ -797,7 +799,7 @@
       }
 
       // BUBBLE RENDERER
-      function appendBubble(role, text, references = null, isError = false) {
+      function appendBubble(role, text, chunkMap = null, isError = false) {
         const now = new Date();
         const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -808,52 +810,26 @@
           .addClass("bubble" + extraClass)
           .text(text);
 
-        // Format citations [Document: ...] with subtle coloring
         if (role === "assistant" && !isError) {
-          const formatted = escapeHtml(text).replace(
-            /(\[(?:Document|Source):[^\]]+\])/g,
-            '<span class="citation">$1</span>',
-          );
+          let formatted = escapeHtml(text);
+          if (chunkMap) {
+            formatted = formatted.replace(
+              /(\[(?:Document|Source):[^\]]*?[Pp]age\s+(\d+)[^\]]*?\])/g,
+              (match, full, pageNum) => {
+                const chunk = chunkMap[parseInt(pageNum)];
+                if (chunk) {
+                  return `<span class="citation citation-link" data-file="${chunk.file}" data-page="${pageNum}">${full}</span>`;
+                }
+                return `<span class="citation">${full}</span>`;
+              },
+            );
+          } else {
+            formatted = formatted.replace(
+              /(\[(?:Document|Source):[^\]]+\])/g,
+              '<span class="citation">$1</span>',
+            );
+          }
           $bubble.html(formatted);
-        }
-        const badges = [];
-
-        if (references) {
-          references.forEach((reference) => {
-            const pageList = reference.pages.sort((a, b) => a - b).join(", ");
-            const $ref = $("<span>")
-              .addClass("badge m-1")
-              .text(`${reference.title}  ·  pages. ${pageList}`)
-              .css({
-                "background-color": "var(--purple-light)",
-                padding: ".35rem",
-                cursor: "pointer",
-              })
-              .on("click", () => {
-                const pages = reference.pages.sort((a, b) => a - b);
-                const firstPage = pages[0] ?? 1;
-                const pdfUrl = `../../../data/pdfs/${reference.file}#page=${firstPage}`;
-
-                $("#pdf-viewer").attr("data", pdfUrl);
-                $("#pdf-fallback-link").attr("href", pdfUrl);
-                $("#pdfModalLabel").text(`${reference.title}  —  page ${firstPage}`);
-
-                const modal = new bootstrap.Modal(document.getElementById("pdfModal"));
-                modal.show();
-
-                // clean up object src when modal closes to stop the pdf rendering in background
-                $("#pdfModal").one("hidden.bs.modal", () => {
-                  $("#pdf-viewer").removeAttr("data");
-                });
-              });
-            badges.push($ref);
-          });
-        }
-        if (badges.length > 0) $bubble.append($("<br>"));
-        for (const $badge of badges) {
-          console.log("$badge =============== ", $badge);
-
-          $bubble.append($badge);
         }
 
         const $meta = $("<div>").addClass("msg-meta").text(time);
@@ -862,6 +838,22 @@
         $("#chat-scroll").append($row);
         scrollToBottom();
       }
+
+      // Click handler for inline citation links
+      $(document).on("click", ".citation-link", function () {
+        const file = $(this).data("file");
+        const page = parseInt($(this).data("page"));
+        const pdfUrl = `../../../data/pdfs/${file}#page=${page}`;
+
+        $("#pdf-viewer").attr("src", pdfUrl);
+        $("#pdf-fallback-link").attr("href", pdfUrl);
+        $("#pdfModalLabel").text(`Page ${page}`);
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("pdfModal"));
+        modal.show();
+        $("#pdfModal").one("hidden.bs.modal", () => {
+          $("#pdf-viewer").attr("src", "");
+        });
+      });
 
       // THINKING INDICATOR
       function showThinking() {
