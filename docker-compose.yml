@@ -1,0 +1,21 @@
+services:
+  compliance-assistant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: regulake
+
+    ports:
+      - "8000:8000"
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+    command: [ "uv", "run", "-m", "gtgh_team3_compliance_assistant.main", "api", "-H", "0.0.0.0", "-p", "8000"]
+
+    restart: unless-stopped
