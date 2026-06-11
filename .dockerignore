@@ -1,0 +1,10 @@
+.venv/
+chroma_db/
+chroma_db_azure/
+data/
+.env
+.git/
+tests/
+scripts/
+__pycache__/
+*.pyc
