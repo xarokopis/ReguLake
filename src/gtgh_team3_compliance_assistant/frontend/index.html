@@ -718,13 +718,23 @@
           data: JSON.stringify({ question: question }),
           contentType: "application/json",
           success: (res) => {
-            handleResponse(res.answer);
+            console.log(question);
+
+            console.log(res);
           },
           error: (err) => {
             console.error(err);
-            handleError('The server returned an error. Please try again.');
           },
         });
+        // MOCK — remove this block when wiring the real API:
+        setTimeout(() => {
+          const mockAnswer =
+            `Controllers and processors must implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk. ` +
+            `[Document: GDPR, Article 32, paragraph 1]\n\n` +
+            `Such measures shall take into account the state of the art, the costs of implementation, and the nature, scope, context, and purposes of processing. ` +
+            `[Document: GDPR, Article 32, paragraph 1(a)]`;
+          handleResponse(mockAnswer);
+        }, 3800);
       }
 
       // RESPONSE HANDLER
