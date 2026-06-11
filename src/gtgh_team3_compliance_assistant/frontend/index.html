@@ -28,7 +28,7 @@
     />
 
     <style>
-      /* ── TOKENS ─────────────────────────────────────────────────── */
+      /* TOKENS */
       :root {
         --bg: #0d0d14;
         --surface: #16161f;
@@ -47,7 +47,7 @@
         --radius-sm: 8px;
       }
 
-      /* ── RESET / BASE ────────────────────────────────────────────── */
+      /* BASE */
       *,
       *::before,
       *::after {
@@ -66,7 +66,7 @@
         overflow: hidden;
       }
 
-      /* ── LAYOUT ──────────────────────────────────────────────────── */
+      /* LAYOUT */
       .app {
         display: flex;
         flex-direction: column;
@@ -75,7 +75,7 @@
         margin: 0 auto;
       }
 
-      /* ── HEADER ──────────────────────────────────────────────────── */
+      /* HEADER */
       .app-header {
         flex-shrink: 0;
         display: flex;
@@ -145,7 +145,7 @@
         box-shadow: 0 0 6px #22c55e;
       }
 
-      /* ── CHAT AREA ───────────────────────────────────────────────── */
+      /* CHAT AREA */
       .chat-scroll {
         flex: 1;
         overflow-y: auto;
@@ -171,7 +171,7 @@
         background: var(--purple);
       }
 
-      /* ── WELCOME ─────────────────────────────────────────────────── */
+      /* WELCOME */
       .welcome {
         display: flex;
         flex-direction: column;
@@ -240,7 +240,7 @@
         border-color: var(--purple-light);
       }
 
-      /* ── MESSAGE BUBBLES ─────────────────────────────────────────── */
+      /* MESSAGE BUBBLES */
       .msg-row {
         display: flex;
         flex-direction: column;
@@ -303,7 +303,7 @@
         padding: 0 4px;
       }
 
-      /* ── THINKING INDICATOR ──────────────────────────────────────── */
+      /* THINKING INDICATOR */
       .thinking-row {
         display: flex;
         align-items: flex-start;
@@ -415,7 +415,7 @@
         }
       }
 
-      /* ── INPUT BAR ───────────────────────────────────────────────── */
+      /* INPUT BAR */
       .input-bar {
         flex-shrink: 0;
         padding: 14px 20px 18px;
@@ -515,7 +515,7 @@
         color: var(--text-muted);
       }
 
-      /* ── ERROR BUBBLE ────────────────────────────────────────────── */
+      /* ERROR BUBBLE */
       .error-bubble {
         background: rgba(239, 68, 68, 0.1);
         border: 1px solid rgba(239, 68, 68, 0.3);
@@ -523,7 +523,7 @@
         font-size: 0.85rem;
       }
 
-      /* ── SCROLLED DIVIDER ────────────────────────────────────────── */
+      /* SCROLLED DIVIDER */
       .date-divider {
         display: flex;
         align-items: center;
@@ -548,34 +548,37 @@
       <!-- HEADER -->
       <header class="app-header">
         <!-- EU star ring SVG -->
-        <svg
-          width="40"
-          height="40"
-          viewBox="0 0 489.09766 485.47266"
-          xmlns:xlink="http://www.w3.org/1999/xlink"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <g fill="#ffcc00" transform="translate(235.66461,237.5)">
-            <path
-              id="s"
-              d="m 0,162.5 22.041947,67.83814 -57.706566,-41.92628 h 71.329238 l -57.706566,41.92628 z"
-            />
-            <use href="#s" y="-400" />
-            <g id="s5">
-              <use href="#s" transform="translate(-100,-26.794919)" />
-              <use href="#s" transform="translate(-173.20508,-100)" />
-              <use href="#s" transform="translate(-200,-200)" />
-              <use href="#s" transform="translate(-173.20508,-300)" />
-              <use href="#s" transform="translate(-100,-373.20508)" />
+        <a href="./index.html">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 489.09766 485.47266"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <g fill="#ffcc00" transform="translate(235.66461,237.5)">
+              <path
+                id="s"
+                d="m 0,162.5 22.041947,67.83814 -57.706566,-41.92628 h 71.329238 l -57.706566,41.92628 z"
+              />
+              <use href="#s" y="-400" />
+              <g id="s5">
+                <use href="#s" transform="translate(-100,-26.794919)" />
+                <use href="#s" transform="translate(-173.20508,-100)" />
+                <use href="#s" transform="translate(-200,-200)" />
+                <use href="#s" transform="translate(-173.20508,-300)" />
+                <use href="#s" transform="translate(-100,-373.20508)" />
+              </g>
+              <use href="#s5" transform="scale(-1,1)" />
             </g>
-            <use href="#s5" transform="scale(-1,1)" />
-          </g>
-        </svg>
-
-        <div class="brand">
-          <div class="brand-name">Regu<span>Lake</span></div>
-          <div class="brand-sub">Law Assistant</div>
-        </div>
+          </svg>
+        </a>
+        <a href="./index.html">
+          <div class="brand">
+            <div class="brand-name">Regu<span>Lake</span></div>
+            <div class="brand-sub">Law Assistant</div>
+          </div>
+        </a>
       </header>
 
       <!-- CHAT -->
@@ -587,18 +590,28 @@
             no guesswork, no inference beyond what the law says.
           </p>
           <div class="welcome-chips">
-            <span class="chip" onclick="fillQuestion(this)"
-              >What does GDPR say about data retention?</span
-            >
-            <span class="chip" onclick="fillQuestion(this)"
-              >AI Act obligations for high-risk systems</span
-            >
-            <span class="chip" onclick="fillQuestion(this)"
-              >Digital Services Act transparency rules</span
-            >
-            <span class="chip" onclick="fillQuestion(this)"
-              >Rights of data subjects under EU law</span
-            >
+            <span class="chip" onclick="fillQuestion(this)">
+              What does GDPR say about data retention?
+            </span>
+            <span class="chip" onclick="fillQuestion(this)">
+              AI Act obligations for high-risk systems
+            </span>
+            <span class="chip" onclick="fillQuestion(this)">
+              What are the rights of data subjects under EU law
+            </span>
+            <span class="chip" onclick="fillQuestion(this)">
+              GDPR obligations for data processors
+            </span>
+            <span class="chip" onclick="fillQuestion(this)">
+              What is the role of the European Data Protection Board?
+            </span>
+
+            <span class="chip" onclick="fillQuestion(this)">
+              AI Act prohibited practices and exemptions
+            </span>
+            <span class="chip" onclick="fillQuestion(this)">
+              Whistleblower protection under EU Directive 2019/1937
+            </span>
           </div>
         </div>
       </div>
@@ -622,12 +635,52 @@
       </div>
     </div>
 
+    <div class="modal fade" id="pdfModal" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div
+          class="modal-content"
+          style="background: var(--surface); border: 1px solid var(--border); height: 85vh"
+        >
+          <div class="modal-header" style="border-bottom: 1px solid var(--border)">
+            <h6
+              class="modal-title"
+              id="pdfModalLabel"
+              style="
+                color: var(--text-muted);
+                font-size: 0.8rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+              "
+            ></h6>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body p-0" style="height: 100%">
+            <object id="pdf-viewer" type="application/pdf" style="width: 100%; height: 100%">
+              <p style="color: var(--text-muted); padding: 20px">
+                Your browser cannot display PDFs inline.
+                <a
+                  id="pdf-fallback-link"
+                  href="#"
+                  target="_blank"
+                  style="color: var(--purple-light)"
+                  >Open in new tab</a
+                >
+              </p>
+            </object>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- jQuery + Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 
     <script>
-      /* ── THINKING MESSAGES ─────────────────────────────────────────── */
       const THINKING_MSGS = [
         "Consulting the Official Journal of the EU…",
         "Cross-referencing legislative provisions…",
@@ -645,7 +698,6 @@
       let thinkingMsgIdx = 0;
       let progressTimer = null;
 
-      /* ── AUTO-RESIZE TEXTAREA ──────────────────────────────────────── */
       const $input = $("#question-input");
 
       $input.on("input", function () {
@@ -653,14 +705,12 @@
         this.style.height = Math.min(this.scrollHeight, 120) + "px";
       });
 
-      /* ── EXAMPLE CHIPS ─────────────────────────────────────────────── */
       function fillQuestion(el) {
-        $input.val($(el).text());
+        $input.val($(el).text().trim());
         $input.trigger("input");
         $input.focus();
       }
 
-      /* ── KEYBOARD SHORTCUTS ────────────────────────────────────────── */
       $input.on("keydown", function (e) {
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
@@ -670,7 +720,6 @@
 
       $("#send-btn").on("click", submitQuestion);
 
-      /* ── SUBMIT LOGIC ──────────────────────────────────────────────── */
       let isLoading = false;
 
       function submitQuestion() {
@@ -693,54 +742,47 @@
         $("#send-btn").prop("disabled", true);
         showThinking();
 
-        // ── API CALL PLACEHOLDER ────────────────────────────────────────
-        // Replace this mock timeout with your real API call.
-        // Expected shape: { answer: "<string>" }
-        // On error call: handleError("Descriptive error message")
-        // On success call: handleResponse(data.answer)
-        //
-        // Example (uncomment and adapt):
-        //
-        // $.ajax({
-        //   url: '/api/ask',
-        //   method: 'POST',
-        //   contentType: 'application/json',
-        //   data: JSON.stringify({ question }),
-        //   success: function(data) { handleResponse(data.answer); },
-        //   error: function(xhr)    { handleError('The server returned an error. Please try again.'); }
-        // });
-        //
-        // ───────────────────────────────────────────────────────────────
-
         $.ajax({
           url: `${apiURI}/query`,
           method: "POST",
           data: JSON.stringify({ question: question }),
           contentType: "application/json",
           success: (res) => {
-            console.log(question);
+            metadatas = res.retrieved_chunks.map((item) => item.metadata);
+            console.log("🚀 ~ submitQuestion ~ metadatas:", metadatas);
 
-            console.log(res);
+            const references = Object.values(
+              metadatas.reduce((acc, { source_file, title, page }) => {
+                if (!acc[source_file]) {
+                  acc[source_file] = { file: source_file, title: title, pages: new Set() };
+                }
+                acc[source_file].pages.add(page);
+                return acc;
+              }, {}),
+            ).map(({ file, title, pages }) => ({ file, title, pages: [...pages] }));
+
+            answer = res.answer;
+
+            if (
+              answer.includes(
+                "The provided document excerpts do not contain sufficient information to answer this question",
+              )
+            ) {
+              handleResponse(answer);
+            } else {
+              handleResponse(answer, references);
+            }
           },
           error: (err) => {
-            console.error(err);
+            handleError(err);
           },
         });
-        // MOCK — remove this block when wiring the real API:
-        setTimeout(() => {
-          const mockAnswer =
-            `Controllers and processors must implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk. ` +
-            `[Document: GDPR, Article 32, paragraph 1]\n\n` +
-            `Such measures shall take into account the state of the art, the costs of implementation, and the nature, scope, context, and purposes of processing. ` +
-            `[Document: GDPR, Article 32, paragraph 1(a)]`;
-          handleResponse(mockAnswer);
-        }, 3800);
       }
 
       // RESPONSE HANDLER
-      function handleResponse(answer) {
+      function handleResponse(answer, references) {
         stopThinking();
-        appendBubble("assistant", answer);
+        appendBubble("assistant", answer, references);
         isLoading = false;
         $("#send-btn").prop("disabled", false);
         $input.focus();
@@ -755,7 +797,7 @@
       }
 
       // BUBBLE RENDERER
-      function appendBubble(role, text, isError = false) {
+      function appendBubble(role, text, references = null, isError = false) {
         const now = new Date();
         const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -773,6 +815,45 @@
             '<span class="citation">$1</span>',
           );
           $bubble.html(formatted);
+        }
+        const badges = [];
+
+        if (references) {
+          references.forEach((reference) => {
+            const pageList = reference.pages.sort((a, b) => a - b).join(", ");
+            const $ref = $("<span>")
+              .addClass("badge m-1")
+              .text(`${reference.title}  ·  pages. ${pageList}`)
+              .css({
+                "background-color": "var(--purple-light)",
+                padding: ".35rem",
+                cursor: "pointer",
+              })
+              .on("click", () => {
+                const pages = reference.pages.sort((a, b) => a - b);
+                const firstPage = pages[0] ?? 1;
+                const pdfUrl = `../../../data/pdfs/${reference.file}#page=${firstPage}`;
+
+                $("#pdf-viewer").attr("data", pdfUrl);
+                $("#pdf-fallback-link").attr("href", pdfUrl);
+                $("#pdfModalLabel").text(`${reference.title}  —  page ${firstPage}`);
+
+                const modal = new bootstrap.Modal(document.getElementById("pdfModal"));
+                modal.show();
+
+                // clean up object src when modal closes to stop the pdf rendering in background
+                $("#pdfModal").one("hidden.bs.modal", () => {
+                  $("#pdf-viewer").removeAttr("data");
+                });
+              });
+            badges.push($ref);
+          });
+        }
+        if (badges.length > 0) $bubble.append($("<br>"));
+        for (const $badge of badges) {
+          console.log("$badge =============== ", $badge);
+
+          $bubble.append($badge);
         }
 
         const $meta = $("<div>").addClass("msg-meta").text(time);
@@ -793,7 +874,9 @@
           .append($("<i>").addClass("bi bi-stars"));
 
         const $card = $("<div>").addClass("thinking-card");
-        const $msg = $("<div>").addClass("thinking-msg").text(THINKING_MSGS[0]);
+        const $msg = $("<div>")
+          .addClass("thinking-msg")
+          .text(THINKING_MSGS[Math.floor(Math.random() * THINKING_MSGS.length)]);
         const $dots = $("<div>")
           .addClass("dots")
           .append($("<div>").addClass("dot"))
@@ -808,13 +891,13 @@
         $("#chat-scroll").append($row);
         scrollToBottom();
 
-        // rotate messages every 2.2 s
+        // rotate messages every 2 s
         thinkingTimer = setInterval(() => {
           thinkingMsgIdx = (thinkingMsgIdx + 1) % THINKING_MSGS.length;
           $msg.fadeOut(200, function () {
             $(this).text(THINKING_MSGS[thinkingMsgIdx]).fadeIn(200);
           });
-        }, 2200);
+        }, 2000);
       }
 
       function stopThinking() {

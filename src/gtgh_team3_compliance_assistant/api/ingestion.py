@@ -1,14 +1,11 @@
 from fastapi import APIRouter, HTTPException
 
-from gtgh_team3_compliance_assistant.config import (
-    PDF_DIR, CHROMA_PATH, COLLECTION_NAME, EMBEDDING_MODEL_NAME,
-)
+from gtgh_team3_compliance_assistant.config import PDF_DIR, CHROMA_PATH, COLLECTION_NAME, EMBEDDING_MODEL_NAME
 from gtgh_team3_compliance_assistant.embedding.LocalEmbedder import LocalEmbedder
 from gtgh_team3_compliance_assistant.storing.localStorage import ChromaVectorStore
 from gtgh_team3_compliance_assistant.pipeline.rag_pipeline import RAGPipeline
 
 router = APIRouter(prefix="/ingestion")
-
 
 @router.post("/process")
 def process_all_pdfs():

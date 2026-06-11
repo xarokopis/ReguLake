@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# run locally or on cloud
+RUN_MODE = 'cloud' # 'cloud' or 'local'
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 DATA_DIR = BASE_DIR / "data"
@@ -14,6 +17,7 @@ CHROMA_PATH = BASE_DIR / "chroma_db"
 
 METADATA_DIR = DATA_DIR / "metadata"
 METADATA_FILE = METADATA_DIR / "documents.json"
+LOGS_FILE = BASE_DIR / "logs" / "rag.log"
 
 for _dir in (PDF_DIR, EXTRACTED_DIR, CHUNK_DIR, METADATA_DIR):
     _dir.mkdir(parents=True, exist_ok=True)
